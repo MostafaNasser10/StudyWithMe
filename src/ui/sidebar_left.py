@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+import base64
+from pathlib import Path
+
+import streamlit as st
+
+from src.chat.chat_store import ChatStore
+from src.files.file_manager import delete_chat_assets
+
+
+LOGO_PATH = Path("assets") / "logo.png"
+
+
+@st.cache_data(show_spinner=False)
+def _sidebar_logo() -> str | None:
+    if not LOGO_PATH.exists():
+        return None
+    return base64.b64encode(LOGO_PATH.read_bytes()).decode("utf-8")
+
+
+def _activate_next_chat(store: ChatStore) -> None:
+    remaining = store.list_chats()
+    if remaining:
+        st.session_state.active_chat_id = remaining[0]["chat_id"]
+    else:
+        st.session_state.active_chat_id = store.create_chat()["chat_id"]
+
+
+def _delete_one_chat(store: ChatStore, chat_id: str) -> None:
+    delete_chat_assets(chat_id)
+    store.delete_chat(chat_id)
+    if st.session_state.get("active_chat_id") == chat_id:
+        _activate_next_chat(store)
+
+
+def _clear_all_chats(store: ChatStore) -> None:
+    for chat in store.list_chats():
+        delete_chat_assets(chat["chat_id"])
+        store.delete_chat(chat["chat_id"])
+    st.session_state.active_chat_id = store.create_chat()["chat_id"]
+    st.session_state.editing_chat_id = None
+
+
+def render_left_sidebar(store: ChatStore) -> None:
+    with st.sidebar:
+        logo = _sidebar_logo()
+        logo_html = (
+            f"<img class='sidebar-logo' src='data:image/png;base64,{logo}' alt='StudyWithMe logo'>"
+            if logo
+            else "<div class='sidebar-logo-fallback'>SW</div>"
+        )
+        st.markdown(
+            f"""
+            <div class="sidebar-brand">
+                {logo_html}
+                <div>
+                    <div class="app-title">StudyWithMe</div>
+                    <div class="app-subtitle">Arabic AI Tutor</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if st.button("Home", use_container_width=True):
+            st.session_state.page = "Home"
+            st.rerun()
+
+        if st.button("New chat", use_container_width=True, type="primary"):
+            chat = store.create_chat()
+            st.session_state.active_chat_id = chat["chat_id"]
+            st.session_state.page = "Chat"
+            st.session_state.editing_chat_id = None
+            st.rerun()
+
+        st.divider()
+        st.caption("Chat history")
+
+        st.session_state.setdefault("editing_chat_id", None)
+        chats = store.list_chats()
+        for chat in chats:
+            chat_id = chat["chat_id"]
+            active = chat_id == st.session_state.active_chat_id
+            title = chat.get("title") or "New Conversation"
+
+            open_col, edit_col, delete_col = st.columns([0.74, 0.13, 0.13], gap="small")
+            with open_col:
+                if st.button(
+                    title[:46],
+                    key=f"open_{chat_id}",
+                    use_container_width=True,
+                    type="primary" if active else "secondary",
+                ):
+                    st.session_state.active_chat_id = chat_id
+                    st.session_state.editing_chat_id = None
+                    st.rerun()
+            with edit_col:
+                if st.button("✎", key=f"edit_{chat_id}", help="Rename chat", use_container_width=True):
+                    st.session_state.editing_chat_id = chat_id
+                    st.rerun()
+            with delete_col:
+                if st.button("×", key=f"delete_{chat_id}", help="Delete chat", use_container_width=True):
+                    _delete_one_chat(store, chat_id)
+                    st.rerun()
+
+            if st.session_state.editing_chat_id == chat_id:
+                new_title = st.text_input(
+                    "Chat name",
+                    value=title,
+                    key=f"rename_input_{chat_id}",
+                    label_visibility="collapsed",
+                )
+                save_col, cancel_col = st.columns(2)
+                with save_col:
+                    if st.button("Save", key=f"save_rename_{chat_id}", use_container_width=True):
+                        store.rename_chat(chat_id, new_title)
+                        st.session_state.editing_chat_id = None
+                        st.rerun()
+                with cancel_col:
+                    if st.button("Cancel", key=f"cancel_rename_{chat_id}", use_container_width=True):
+                        st.session_state.editing_chat_id = None
+                        st.rerun()
+
+        st.divider()
+        if st.button("Clear all chat history", use_container_width=True):
+            _clear_all_chats(store)
+            st.rerun()
+

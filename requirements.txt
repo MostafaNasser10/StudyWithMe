@@ -1,0 +1,16 @@
+streamlit
+langchain
+langchain-community
+langchain-ollama
+langchain-huggingface
+langchain-text-splitters
+python-dotenv
+faiss-cpu
+sentence-transformers
+pypdf
+pandas
+numpy
+torchvision
+python-docx
+docx2txt
+

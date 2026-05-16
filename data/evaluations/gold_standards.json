@@ -1,0 +1,17 @@
+[
+  {
+    "id": "rag_definition_001",
+    "question": "ما هو RAG؟",
+    "expected_points": [
+      "RAG means Retrieval-Augmented Generation",
+      "It retrieves relevant context before generation",
+      "It reduces hallucination"
+    ],
+    "required_structure": [
+      "الإجابة المختصرة",
+      "الشرح خطوة بخطوة",
+      "الدليل من الملفات"
+    ]
+  }
+]
+
