@@ -13,6 +13,44 @@ def _badge(status: str) -> str:
     return f"<span class='badge {color}'>{safe_text(label)}</span>"
 
 
+def _latest_trace(chat: dict) -> dict | None:
+    traces = chat.get("traces") or []
+    return traces[-1] if traces else None
+
+
+def _latest_evaluation(chat: dict, trace: dict | None = None) -> dict | None:
+    evaluations = chat.get("evaluations") or []
+    if not evaluations:
+        return None
+
+    trace_evaluation = trace.get("evaluation_result") if trace else None
+    if isinstance(trace_evaluation, dict) and trace_evaluation.get("evaluation_id"):
+        target_id = trace_evaluation["evaluation_id"]
+        for evaluation in reversed(evaluations):
+            if evaluation.get("evaluation_id") == target_id:
+                return evaluation
+
+    latest_assistant = None
+    for message in reversed(chat.get("messages") or []):
+        if message.get("role") == "assistant":
+            latest_assistant = message
+            break
+
+    if latest_assistant and latest_assistant.get("evaluation_id"):
+        target_id = latest_assistant["evaluation_id"]
+        for evaluation in reversed(evaluations):
+            if evaluation.get("evaluation_id") == target_id:
+                return evaluation
+
+    return evaluations[-1]
+
+
+def _current_process(chat: dict) -> tuple[dict | None, dict | None]:
+    trace = _latest_trace(chat)
+    evaluation = _latest_evaluation(chat, trace)
+    return trace, evaluation
+
+
 def render_right_sidebar(chat: dict, store: ChatStore) -> None:
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>Uploaded files</div>", unsafe_allow_html=True)
@@ -58,17 +96,16 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-    prepared = st.session_state.get("last_prepared")
-    trace = st.session_state.get("last_trace")
-    evaluation = st.session_state.get("last_evaluation")
+    trace, evaluation = _current_process(chat)
 
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>Agent / tools</div>", unsafe_allow_html=True)
-    if prepared:
-        st.write(f"Selected agent: **{prepared.get('selected_agent', 'N/A')}**")
-        st.caption(" -> ".join(prepared.get("route", [])))
-        st.write(f"Tools: {', '.join(prepared.get('tools_used') or ['None'])}")
-        st.write(f"Retrieved docs: {len(prepared.get('docs', []))}")
+    if trace:
+        st.write(f"Selected agent: **{trace.get('selected_agent', 'N/A')}**")
+        route = trace.get("route") or ["Supervisor", trace.get("selected_agent", "N/A")]
+        st.caption(" -> ".join(route))
+        st.write(f"Tools: {', '.join(trace.get('tools_used') or ['None'])}")
+        st.write(f"Retrieved docs: {len(trace.get('retrieved_docs') or [])}")
     else:
         st.caption("Ask a question to see routing.")
     st.markdown("</div>", unsafe_allow_html=True)

@@ -158,6 +158,8 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
     trace = tracer.finish(final_answer=final_answer, evaluation_result=evaluation)
     trace["timings_ms"].update(prepared.timings_ms)
     trace["timings_ms"]["total_response_ms"] = response_time_ms
+    trace["route"] = prepared.route
+    trace["web_sources"] = prepared.web_sources
     store.append_trace(chat["chat_id"], trace)
 
     store.add_message(
@@ -178,3 +180,4 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
     st.session_state.last_trace = trace
     st.session_state.last_evaluation = evaluation
     st.rerun()
+
