@@ -81,24 +81,23 @@ def context_from_results(results) -> str:
 def append_sources_section(answer: str, docs: list[dict], web_sources: list[dict] | None = None) -> str:
     lines = []
     if docs:
-        lines.extend(["", "---", "", "# قائمة المصادر"])
-        lines.append("## من الملفات")
+        lines.extend(["", "---", "", "# المراجع المستخدمة"])
+        lines.append("## ملفات")
         for doc in docs[:6]:
             lines.append(
-                f"- [المقطع {doc['rank']}] {doc.get('source_name') or _source_name(doc.get('source', ''))} | "
-                f"{doc.get('location', 'الموضع غير متاح')} | درجة التشابه: {doc.get('score', 'N/A')}"
+                f"- مرجع {doc.get('rank', '?')}: {doc.get('source_name') or _source_name(doc.get('source', ''))}، "
+                f"{doc.get('location', 'الموضع غير متاح')}"
             )
     if web_sources:
         if not lines:
-            lines.extend(["", "---", "", "# قائمة المصادر"])
-        lines.append("## من الويب")
+            lines.extend(["", "---", "", "# المراجع المستخدمة"])
+        lines.append("## ويب")
         for idx, source in enumerate(web_sources[:6], start=1):
             title = source.get("title", "Web source")
             url = source.get("url", "")
-            snippet = source.get("snippet", "")
-            lines.append(f"- [ويب {idx}] {title} | {url} | {snippet[:160]}".strip())
+            lines.append(f"- مرجع ويب {idx}: {title}، {url}".strip())
     if not docs and not web_sources and "من النموذج" not in answer:
-        lines.extend(["", "---", "", "# قائمة المصادر", "- من النموذج: لا توجد مصادر ملفات أو ويب مستخدمة في هذه الإجابة."])
+        lines.extend(["", "---", "", "# المراجع المستخدمة", "- من النموذج: لا توجد مصادر ملفات أو ويب مستخدمة في هذه الإجابة."])
     return answer.rstrip() + ("\n" + "\n".join(lines) if lines else "")
 
 
@@ -128,4 +127,3 @@ USER REQUEST:
 
     def invoke(self, prompt: str) -> str:
         return get_llm().invoke(prompt).content
-

@@ -37,9 +37,20 @@ class ChatStore:
     def list_chats(self) -> list[dict[str, Any]]:
         chats = []
         for path in self.chat_dir.glob("chat_*.json"):
-            chat = self.load_chat(path.stem.removeprefix("chat_"))
-            if chat:
-                chats.append(chat)
+            try:
+                with path.open("r", encoding="utf-8") as file:
+                    data = json.load(file)
+            except Exception:
+                continue
+            chat_id = str(data.get("chat_id") or path.stem.removeprefix("chat_"))
+            chats.append(
+                {
+                    "chat_id": chat_id,
+                    "title": data.get("title") or "New Conversation",
+                    "updated_at": data.get("updated_at", ""),
+                    "created_at": data.get("created_at", ""),
+                }
+            )
         return sorted(chats, key=lambda chat: chat.get("updated_at", ""), reverse=True)
 
     def load_chat(self, chat_id: str) -> dict[str, Any] | None:
@@ -86,7 +97,9 @@ class ChatStore:
 
         chats = self.list_chats()
         if chats:
-            return chats[0]
+            chat = self.load_chat(chats[0]["chat_id"])
+            if chat:
+                return chat
         return self.create_chat()
 
     def delete_chat(self, chat_id: str) -> None:
@@ -114,6 +127,7 @@ class ChatStore:
         docs: list[dict[str, Any]] | None = None,
         trace_id: str | None = None,
         evaluation_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         chat = self.ensure_chat(chat_id)
         message = asdict(
@@ -128,6 +142,8 @@ class ChatStore:
                 evaluation_id=evaluation_id,
             )
         )
+        if metadata:
+            message["metadata"] = metadata
         chat["messages"].append(message)
         chat["updated_at"] = now_iso()
         if role == "user":
@@ -157,6 +173,46 @@ class ChatStore:
         chat["updated_at"] = now_iso()
         self.save_chat(chat)
 
+    def record_assistant_result(
+        self,
+        chat_id: str,
+        content: str,
+        agent: str | None = None,
+        docs: list[dict[str, Any]] | None = None,
+        trace: dict[str, Any] | None = None,
+        evaluation: dict[str, Any] | None = None,
+        response_time_ms: int = 0,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        chat = self.ensure_chat(chat_id)
+        if evaluation and evaluation.get("evaluation_id"):
+            chat.setdefault("evaluations", []).append(evaluation)
+        if trace:
+            trace.setdefault("timings_ms", {})
+            trace["timings_ms"]["total_response_ms"] = response_time_ms
+            chat.setdefault("traces", []).append(trace)
+
+        message = asdict(
+            ChatMessage(
+                message_id=new_id("msg"),
+                role="assistant",
+                content=content,
+                created_at=now_iso(),
+                agent=agent,
+                docs=docs or [],
+                trace_id=(trace or {}).get("prompt_id"),
+                evaluation_id=evaluation.get("evaluation_id") if isinstance(evaluation, dict) else None,
+            )
+        )
+        if metadata:
+            message["metadata"] = metadata
+        chat["messages"].append(message)
+        stats = chat.setdefault("stats", {})
+        stats["total_response_time_ms"] = int(stats.get("total_response_time_ms", 0) or 0) + int(response_time_ms)
+        chat["updated_at"] = now_iso()
+        self.save_chat(chat)
+        return message
+
     def _normalize_chat(self, data: dict[str, Any]) -> dict[str, Any]:
         now = now_iso()
         chat_id = str(data.get("chat_id") or data.get("id") or new_id("chat").removeprefix("chat_"))
@@ -169,6 +225,8 @@ class ChatStore:
             "messages": data.get("messages") or [],
             "traces": data.get("traces") or [],
             "evaluations": data.get("evaluations") or [],
+            "active_quiz": data.get("active_quiz"),
+            "quiz_history": data.get("quiz_history") or [],
             "stats": data.get("stats") or {},
             "indexing_status": data.get("indexing_status") or "EMPTY",
             "indexing_step": data.get("indexing_step") or "",

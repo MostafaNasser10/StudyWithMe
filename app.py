@@ -1,11 +1,8 @@
 import streamlit as st
 
 from src.chat.chat_state import get_store, init_session_state
-from src.ui.chat_view import render_chat_view
 from src.ui.home import render_home_page
 from src.ui.layout import configure_page
-from src.ui.sidebar_left import render_left_sidebar
-from src.ui.sidebar_right import render_right_sidebar
 from src.ui.styles import apply_styles
 
 
@@ -24,6 +21,10 @@ def main() -> None:
                 st.rerun()
         render_home_page()
         return
+
+    from src.ui.chat_view import render_chat_view
+    from src.ui.sidebar_left import render_left_sidebar
+    from src.ui.sidebar_right import render_right_sidebar
 
     render_left_sidebar(store)
 

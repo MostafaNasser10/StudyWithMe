@@ -1,0 +1,14 @@
+{
+  "embedding_model_name": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "chunk_size": 1000,
+  "chunk_overlap": 200,
+  "files": [
+    {
+      "path": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+      "size_bytes": 160296,
+      "modified_time": 1780210199.2554457,
+      "content_hash": "7c6f78bea1e48a70a3191c108418a7c2b32107698f53887f78003357f9e4784f",
+      "indexed_at": "2026-05-31T06:50:15+00:00"
+    }
+  ]
+}

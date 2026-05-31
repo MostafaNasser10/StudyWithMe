@@ -3,6 +3,9 @@ from pathlib import Path
 from langchain_core.documents import Document
 
 from src.config import RAW_DOCS_DIR, SUPPORTED_EXTENSIONS
+from src.document_processing.image_extractor import extract_images
+from src.document_processing.ocr import run_ocr
+from src.document_processing.table_extractor import extract_tables
 
 try:
     from langchain_community.document_loaders import CSVLoader, Docx2txtLoader, PyPDFLoader, TextLoader
@@ -72,6 +75,9 @@ def load_file(path: str | Path) -> list[Document]:
         doc.metadata["source"] = str(file_path)
         doc.metadata["file_name"] = file_path.name
         doc.metadata["file_type"] = suffix
+        doc.metadata["ocr"] = run_ocr(file_path).__dict__
+        doc.metadata["image_extraction"] = extract_images(file_path).__dict__
+        doc.metadata["table_extraction"] = extract_tables(file_path).__dict__
 
     return loaded_docs
 
@@ -107,4 +113,3 @@ def load_documents(
             )
 
     return documents
-

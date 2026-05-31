@@ -1,7 +1,10 @@
 streamlit
+langgraph
+pydantic
 langchain
 langchain-community
 langchain-ollama
+langchain-openai
 langchain-huggingface
 langchain-text-splitters
 python-dotenv
@@ -13,4 +16,3 @@ numpy
 torchvision
 python-docx
 docx2txt
-

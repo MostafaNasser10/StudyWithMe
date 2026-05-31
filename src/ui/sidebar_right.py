@@ -4,7 +4,6 @@ from src.chat.chat_store import ChatStore
 from src.files.indexing_status import STATUS_COLORS, STATUS_LABELS, IndexingStatus
 from src.ui.components import format_bytes, safe_text, short_name
 from src.ui.upload_panel import render_file_delete_button, render_upload_controls
-from src.vector_store import rebuild_all
 
 
 def _badge(status: str) -> str:
@@ -80,6 +79,8 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
         st.caption("No files in this chat.")
 
     if files and st.button("Build / refresh index", use_container_width=True, type="primary"):
+        from src.vector_store import rebuild_all
+
         store.update_chat(chat["chat_id"], indexing_status=IndexingStatus.INDEXING, indexing_step="Loading documents")
         with st.spinner("Indexing this chat..."):
             result = rebuild_all(chat["chat_id"])
@@ -102,7 +103,10 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
     st.markdown("<div class='section-title'>Agent / tools</div>", unsafe_allow_html=True)
     if trace:
         st.write(f"Selected agent: **{trace.get('selected_agent', 'N/A')}**")
-        route = trace.get("route") or ["Supervisor", trace.get("selected_agent", "N/A")]
+        llm = trace.get("llm") or {}
+        if llm:
+            st.write(f"Model: **{llm.get('provider', 'llm')} / {llm.get('model', 'unknown')}**")
+        route = trace.get("route") or ["LangGraph", trace.get("selected_agent", "N/A")]
         st.caption(" -> ".join(route))
         st.write(f"Tools: {', '.join(trace.get('tools_used') or ['None'])}")
         st.write(f"Retrieved docs: {len(trace.get('retrieved_docs') or [])}")
@@ -127,8 +131,25 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
     st.markdown("<div class='section-title'>Evaluation</div>", unsafe_allow_html=True)
     if evaluation:
         st.metric("Score", evaluation.get("overall_score", "N/A"))
-        for name, score in list(evaluation.get("rubric", {}).items())[:5]:
-            st.caption(f"{name}: {score}/10")
+        rubric = evaluation.get("rubric", {})
+        reasons = evaluation.get("rubric_reasons", {})
+        rows = [
+            {
+                "Criterion": name,
+                "Score": f"{score}/10",
+                "Reason": reasons.get(name, "No deterministic reason recorded."),
+            }
+            for name, score in rubric.items()
+        ]
+        st.dataframe(rows, use_container_width=True, hide_index=True, height=260)
+        with st.expander("Why these scores?"):
+            for row in rows:
+                st.markdown(f"**{row['Criterion']} - {row['Score']}**")
+                st.caption(row["Reason"])
+        if evaluation.get("recommendations"):
+            st.caption("Recommendations")
+            for item in evaluation["recommendations"]:
+                st.caption(f"- {item}")
         for check in evaluation.get("deterministic_checks", []):
             st.caption(f"{check['name']}: {'passed' if check.get('passed') else 'failed'}")
         if evaluation.get("llm_judge"):

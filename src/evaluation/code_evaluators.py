@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from src.arabic_guard import contains_disallowed_language
+from src.arabic_guard import contains_disallowed_language, disallowed_language_details
 
 
 ARABIC_RE = re.compile(r"[\u0600-\u06FF]")
@@ -14,26 +14,32 @@ def check_arabic_language(query: str, answer: str) -> dict:
     total_letters = len(re.findall(r"[A-Za-z\u0600-\u06FF]", answer or ""))
     arabic_ratio = arabic_chars / max(total_letters, 1)
     disallowed = contains_disallowed_language(answer)
+    details = disallowed_language_details(answer)
     return {
         "name": "arabic_language",
         "passed": arabic_ratio >= 0.55 and not disallowed,
         "expected": "Arabic answer with only necessary English technical terms",
-        "actual": f"arabic_ratio={arabic_ratio:.2f}, disallowed_language={disallowed}, words={len(words)}",
+        "actual": {
+            "arabic_ratio": round(arabic_ratio, 2),
+            "disallowed_language": disallowed,
+            "word_count": len(words),
+            **details,
+        },
     }
 
 
 def check_required_structure(query: str, answer: str) -> dict:
     text = query.lower()
     if any(word in text for word in ["quiz", "اختبار", "أسئلة", "اسئلة"]):
-        required = ["# هدف الاختبار", "# الأسئلة", "# جدول الإجابات", "# نصيحة"]
+        required = ["هدف الاختبار", "الأسئلة", "الإجابات", "نصيحة"]
     elif any(word in text for word in ["feedback", "evaluate", "correct", "قيّم", "قيم", "صحح"]):
-        required = ["# الدرجة", "# ما هو صحيح", "# ما يحتاج", "# الدليل"]
+        required = ["النتيجة", "الصحيح", "الأخطاء", "الدليل"]
     elif any(word in text for word in ["plan", "schedule", "خطة", "جدول"]):
-        required = ["# الهدف", "# خطة", "# تمارين", "# مصادر"]
-    elif any(word in text for word in ["summary", "summarize", "تلخيص", "لخص", "ملخص"]):
-        required = ["# الملخص", "# الأفكار", "# المصادر", "# نقاط"]
+        required = ["الهدف", "خطة", "تمارين", "مصادر"]
+    elif any(word in text for word in ["summary", "summarize", "تلخيص", "لخص", "ملخص", "document", "file", "مستند", "ملف"]):
+        required = ["نظرة عامة", "خريطة", "الشرح", "مثال", "خلاصة"]
     else:
-        required = ["# الإجابة المختصرة", "# الشرح", "# المصادر", "# ملخص"]
+        required = ["الفكرة", "الشرح", "مثال", "الدليل", "خلاصة"]
     present = [heading for heading in required if heading in answer]
     return {
         "name": "required_learning_structure",
@@ -45,9 +51,16 @@ def check_required_structure(query: str, answer: str) -> dict:
 
 def check_source_grounding(query: str, answer: str, docs: list[dict], web_sources: list[dict] | None = None) -> dict:
     web_sources = web_sources or []
-    has_source_section = "# قائمة المصادر" in answer or "# المصادر" in answer or "# المصادر والدليل" in answer
-    mentions_files = "من الملفات" in answer or bool(docs and any((doc.get("source_name") or doc.get("source", "")) in answer for doc in docs[:3]))
-    mentions_web = "من الويب" in answer or bool(web_sources and any(src.get("title", "") in answer for src in web_sources[:3]))
+    has_source_section = (
+        "# قائمة المصادر" in answer
+        or "# المراجع المستخدمة" in answer
+        or "# المصادر" in answer
+        or "# المصادر والدليل" in answer
+        or "# الدليل من الملف" in answer
+        or "# الدليل من المصادر" in answer
+    )
+    mentions_files = "من الملفات" in answer or "ملفات" in answer or bool(docs and any((doc.get("source_name") or doc.get("source", "")) in answer for doc in docs[:3]))
+    mentions_web = "من الويب" in answer or "ويب" in answer or bool(web_sources and any(src.get("title", "") in answer for src in web_sources[:3]))
     mentions_model = "من النموذج" in answer
 
     expected = []

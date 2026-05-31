@@ -1,0 +1,2088 @@
+{
+  "chat_id": "b733493b5420",
+  "title": "اشرحلي الفايل",
+  "created_at": "2026-05-31T06:49:42+00:00",
+  "updated_at": "2026-05-31T06:59:31+00:00",
+  "files": [
+    {
+      "file_id": "file_14b079d17ceb",
+      "original_name": "9780750677929.pdf",
+      "saved_name": "file_14b079d17ceb_9780750677929.pdf",
+      "path": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+      "size_bytes": 160296,
+      "extension": ".pdf",
+      "upload_time": "2026-05-31T06:49:59+00:00",
+      "indexing_status": "READY"
+    }
+  ],
+  "messages": [
+    {
+      "message_id": "msg_f1b3a55fb672",
+      "role": "user",
+      "content": "اشرحلي الفايل",
+      "created_at": "2026-05-31T06:50:19+00:00",
+      "agent": null,
+      "docs": [],
+      "trace_id": null,
+      "evaluation_id": null
+    },
+    {
+      "message_id": "msg_a7f53ac73342",
+      "role": "assistant",
+      "content": "# الإجابة\nلم أجد دليلا واضحا في المستندات الحالية يربط سؤالك بمحتوى الملفات، والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذا كان السؤال عاما أو حديثا.\n\n# المصدر\n- سياسة اختيار المصادر\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "created_at": "2026-05-31T06:50:20+00:00",
+      "agent": "RAG Tutor",
+      "docs": [
+        {
+          "rank": 1,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 2",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 2",
+          "page": 2,
+          "line": null,
+          "score": 12.567960739135742,
+          "snippet": "3\nIntroduction to Embedded Systems\nThe ﬁeld of embedded systems is wide and varied, and it is difﬁcult to pin down exact deﬁ-\nnitions or descriptions. However, Chapter 1 introduces a useful model that can be applied \nto any embedded system. This model is introduced as a means for the reader to understand \nthe major components that make up different types of electronic devices, regardless of their \ncomplexity or differences. Chapter 2 introduces and deﬁnes the common standards adhered to \nwhen building an embedded system. Because this book is an overview of embedded systems \narchitecture, covering every possible standards-based component that could be implemented is \nbeyond its scope. Therefo"
+        },
+        {
+          "rank": 2,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 6",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 6",
+          "page": 6,
+          "line": null,
+          "score": 13.247791290283203,
+          "snippet": "A Systems Engineering Approach to Embedded Systems Design\n7\nMarket Embedded Device\nIndustrial Control Robotics and Control Systems (Manufacturing)\nMedical Infusion Pumps\nDialysis Machines\nProsthetic Devices\nCardiac Monitors\nNetworking Routers\nHubs\nGateways\nOfﬁce Automation Fax Machine\nPhotocopier\nPrinters\nMonitors\nScanners\n1.2  Embedded Systems Design\nWhen approaching embedded systems architecture design from a systems engineering point \nof view, several models can be applied to describe the cycle of embedded system design. \nMost of these models are based upon one or some combination of the following development \nmodels:[1-5]\n• The big-bang model, in which there is essentially no planning or"
+        },
+        {
+          "rank": 3,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 6",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 6",
+          "page": 6,
+          "line": null,
+          "score": 13.598169326782227,
+          "snippet": "processes are in place before the start of development.\n• The waterfall model, in which there is a process for developing a system in steps, \nwhere results of one step ﬂow into the next step. \n• The spiral model, in which there is a process for developing a system in steps, and \nthroughout the various steps, feedback is obtained and incorporated back into the \nprocess.\nThis book supports the model shown in Figure 1-1, which I refer to as the Embedded Sys-\ntems Design and Development Lifecycle Model. This model is based on a combination of the \npopular waterfall and spiral industry models.\n[1-2] When I investigated and analyzed the many \nsuccessful embedded projects that I have been a part of"
+        },
+        {
+          "rank": 4,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 11",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 11",
+          "page": 11,
+          "line": null,
+          "score": 13.811653137207031,
+          "snippet": "Chapter 1\n12\nelements within an embedded system works in a vacuum. Every element within a \ndevice interacts with some other element in some fashion. Furthermore, externally \nvisible characteristics of elements may differ given a different set of other elements to \nwork with. Without understanding the “whys” behind an element’s provided function\n-\nality, performance, and so on, it would be difﬁcult to determine how the system would \nbehave under a variety of circumstances in the real world. \nEven if the architectural structures are rough and informal, it is still better than nothing. As \nlong as the architecture conveys in some way the critical components of a design and their re-\nlationships"
+        }
+      ],
+      "trace_id": "prompt_1f36e5f0fa81",
+      "evaluation_id": "eval_fc43264b873c"
+    },
+    {
+      "message_id": "msg_79731dfaed98",
+      "role": "user",
+      "content": "اشرح",
+      "created_at": "2026-05-31T06:50:38+00:00",
+      "agent": null,
+      "docs": [],
+      "trace_id": null,
+      "evaluation_id": null
+    },
+    {
+      "message_id": "msg_06661397a8a0",
+      "role": "assistant",
+      "content": "# الإجابة\nلم أجد دليلا واضحا في المستندات الحالية يربط سؤالك بمحتوى الملفات، والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذا كان السؤال عاما أو حديثا.\n\n# المصدر\n- سياسة اختيار المصادر\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "created_at": "2026-05-31T06:50:39+00:00",
+      "agent": "RAG Tutor",
+      "docs": [
+        {
+          "rank": 1,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 2",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 2",
+          "page": 2,
+          "line": null,
+          "score": 14.63378620147705,
+          "snippet": "3\nIntroduction to Embedded Systems\nThe ﬁeld of embedded systems is wide and varied, and it is difﬁcult to pin down exact deﬁ-\nnitions or descriptions. However, Chapter 1 introduces a useful model that can be applied \nto any embedded system. This model is introduced as a means for the reader to understand \nthe major components that make up different types of electronic devices, regardless of their \ncomplexity or differences. Chapter 2 introduces and deﬁnes the common standards adhered to \nwhen building an embedded system. Because this book is an overview of embedded systems \narchitecture, covering every possible standards-based component that could be implemented is \nbeyond its scope. Therefo"
+        },
+        {
+          "rank": 2,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 4",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 4",
+          "page": 4,
+          "line": null,
+          "score": 15.645960807800293,
+          "snippet": "5\nC H A P T E R 1\nA Systems Engineering Approach \nto Embedded Systems Design\n1.1  What Is an Embedded System?\nAn embedded system is an applied computer system, as distinguished from other types of com-\nputer systems such as personal computers (PCs) or supercomputers. However, you will ﬁnd \nthat the deﬁnition of “embedded system” is ﬂuid and difﬁcult to pin down, as it constantly \nevolves with advances in technology and dramatic decreases in the cost of implementing vari-\nous hardware and software components. In recent years, the ﬁeld has outgrown many of its \ntraditional descriptions. Because the reader will likely encounter some of these descriptions \nand deﬁnitions, it is important to unde"
+        },
+        {
+          "rank": 3,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 11",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 11",
+          "page": 11,
+          "line": null,
+          "score": 16.127595901489258,
+          "snippet": "Chapter 1\n12\nelements within an embedded system works in a vacuum. Every element within a \ndevice interacts with some other element in some fashion. Furthermore, externally \nvisible characteristics of elements may differ given a different set of other elements to \nwork with. Without understanding the “whys” behind an element’s provided function\n-\nality, performance, and so on, it would be difﬁcult to determine how the system would \nbehave under a variety of circumstances in the real world. \nEven if the architectural structures are rough and informal, it is still better than nothing. As \nlong as the architecture conveys in some way the critical components of a design and their re-\nlationships"
+        },
+        {
+          "rank": 4,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 7",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 7",
+          "page": 7,
+          "line": null,
+          "score": 16.947612762451172,
+          "snippet": "Chapter 1\n8\nFigure 1-1: Embedded Systems Design and Development Lifecycle Model [1-2]\nmaintaining the system. Most of this book is dedicated to discussing phase 1, and the rest of \nthis chapter is dedicated to discussing why so much of this book has been devoted to creating \nan embedded system’s architecture.\nWithin this text, phase 1 is deﬁned as being made up of six stages: having a strong techni-\ncal foundation (stage 1), understanding the Architectural Business Cycle (stage 2), deﬁning \nthe architectural patterns and models (stage 3), deﬁning the architectural structures (stage 4), \ndocumenting the architecture (stage 5), and analyzing and reviewing the architecture (stage \n6)[1-3]. Chap"
+        }
+      ],
+      "trace_id": "prompt_4d190d0416b8",
+      "evaluation_id": "eval_0d6942453344"
+    },
+    {
+      "message_id": "msg_6ca6c2a39423",
+      "role": "user",
+      "content": "اشرحلي الفايل",
+      "created_at": "2026-05-31T06:53:22+00:00",
+      "agent": null,
+      "docs": [],
+      "trace_id": null,
+      "evaluation_id": null
+    },
+    {
+      "message_id": "msg_2588b2f1f000",
+      "role": "assistant",
+      "content": "# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوع الأنظمة المدمجة، وهو مجال واسع ومتعدد الجوانب في عالم التكنولوجيا. الأنظمة المدمجة هي أنظمة حاسوبية مخصصة لأداء مهام محددة، وتختلف عن الحواسيب الشخصية أو الفائقة في طبيعتها ووظيفتها. يتضمن الملف نماذج وأساليب تصميم الأنظمة المدمجة، ويستعرض المعايير الشائعة المستخدمة في بناء هذه الأنظمة. تكمن أهمية هذا الموضوع في دوره الحيوي في تطوير الأجهزة الإلكترونية الحديثة، حيث تتطلب العديد من التطبيقات، مثل الأجهزة الطبية والسيارات، أنظمة مدمجة ذات موثوقية وجودة عالية.\n\n## 2. خريطة المحتوى\n1. **مقدمة في الأنظمة المدمجة**\n   - **الفكرة:** تعريف الأنظمة المدمجة وأهميتها.\n   - **لماذا يحتاج الطالب إلى فهمها:** لفهم الأساسيات التي تقوم عليها الأنظمة المدمجة.\n\n2. **تصميم الأنظمة المدمجة**\n   - **الفكرة:** نماذج وأساليب تصميم الأنظمة.\n   - **لماذا يحتاج الطالب إلى فهمها:** لتطبيق الأساليب الصحيحة في تطوير الأنظمة المدمجة.\n\n3. **معمارية الأنظمة المدمجة**\n   - **الفكرة:** فهم مكونات الأنظمة المدمجة وكيفية تفاعلها.\n   - **لماذا يحتاج الطالب إلى فهمها:** لتصميم أنظمة فعالة وقابلة للتطوير.\n\n## 3. الشرح التفصيلي\nيبدأ الملف بتعريف الأنظمة المدمجة، موضحًا أنها أنظمة حاسوبية متخصصة تختلف عن الأنظمة التقليدية. يتناول الفصل الأول نماذج تصميم الأنظمة المدمجة، مثل نموذج \"الشلال\" و\"الدوامة\"، حيث يوضح كيفية تطوير النظام من خلال مراحل محددة. كما يناقش أهمية الجودة والموثوقية في تصميم الأنظمة، خاصة في التطبيقات الحساسة مثل الأجهزة الطبية.\n\nفي الفصل الثاني، يتم تقديم معمارية الأنظمة المدمجة، حيث يتم تمثيل المكونات كعناصر تتفاعل مع بعضها البعض. يتناول الملف كيفية تنظيم هذه العناصر في هياكل مختلفة، مثل الهياكل الطبقية أو الوحدات، مما يسهل فهم كيفية عمل النظام ككل.\n\n## 4. المفاهيم والمصطلحات المهمة\n\n| المصطلح                | معناه                                                      | دوره داخل الملف                                           |\n|-----------------------|-----------------------------------------------------------|----------------------------------------------------------|\n| الأنظمة المدمجة       | أنظمة حاسوبية مخصصة لأداء مهام معينة                     | أساس الموضوع الذي يدور حوله الملف                       |\n| تصميم الأنظمة         | عملية تطوير الأنظمة المدمجة باستخدام نماذج محددة         | يشرح كيفية بناء الأنظمة بشكل فعال                        |\n| معمارية الأنظمة       | تمثيل مكونات النظام وكيفية تفاعلها                       | يساعد في فهم كيفية تنظيم الأنظمة المدمجة                |\n| نموذج الشلال          | نموذج تصميم يعتمد على مراحل متتابعة                     | يوضح خطوات تطوير النظام                                  |\n| نموذج الدوامة         | نموذج تصميم يتضمن التغذية الراجعة خلال مراحل التطوير    | يساهم في تحسين النظام بناءً على الملاحظات               |\n\n## 5. مثال تطبيقي كامل\nتخيل أنك تعمل على تطوير جهاز طبي لمراقبة نبضات القلب. تبدأ المشكلة بأن الجهاز الحالي يعاني من عدم دقة في القياسات. هنا، تستخدم طريقة التفكير الهندسية لتحديد متطلبات الجهاز. تبدأ بخطوات الحل من خلال تحليل المتطلبات، ثم تصميم معمارية الجهاز باستخدام نموذج الشلال. بعد ذلك، تقوم بتطوير النسخة الأولية للجهاز، وتختبره للحصول على ملاحظات. بعد دمج الملاحظات، تصل إلى النسخة النهائية التي توفر دقة عالية في القياسات، مما يحسن من موثوقية الجهاز في التطبيقات الطبية.\n\n## 6. ماذا تذاكر أولا\n1. تعريف الأنظمة المدمجة.\n2. نماذج تصميم الأنظمة.\n3. معمارية الأنظمة المدمجة.\n4. أهمية الجودة والموثوقية.\n5. كيفية تنظيم المكونات في هياكل مختلفة.\n6. استخدام نماذج مثل الشلال والدوامة.\n7. تطبيقات عملية للأنظمة المدمجة.\n8. معايير تصميم الأنظمة.\n\n## 7. الدليل من الملف\n- الصفحة 2: مقدمة حول الأنظمة المدمجة.\n- الصفحة 4: تعريف الأنظمة المدمجة وأهميتها.\n- الصفحة 6: نماذج تصميم الأنظمة.\n- الصفحة 8: معمارية الأنظمة المدمجة.\n\n## 8. خلاصة سريعة\nالملف يقدم نظرة شاملة على الأنظمة المدمجة، بدءًا من تعريفها ووصولًا إلى تصميمها ومعماريتها. يتناول أهمية الجودة والموثوقية في التطبيقات المختلفة، ويستعرض نماذج التصميم الأساسية التي يجب على الطلاب فهمها لتطوير أنظمة مدمجة فعالة.\n\n---\n\n# المراجع المستخدمة\n## ملفات\n- مرجع 1: file_14b079d17ceb_9780750677929.pdf، الصفحة 0\n- مرجع 3: file_14b079d17ceb_9780750677929.pdf، الصفحة 2\n- مرجع 5: file_14b079d17ceb_9780750677929.pdf، الصفحة 4\n- مرجع 6: file_14b079d17ceb_9780750677929.pdf، الصفحة 5\n- مرجع 7: file_14b079d17ceb_9780750677929.pdf، الصفحة 6\n- مرجع 8: file_14b079d17ceb_9780750677929.pdf، الصفحة 7\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "created_at": "2026-05-31T06:53:46+00:00",
+      "agent": "Summary",
+      "docs": [
+        {
+          "rank": 1,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 0",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 0",
+          "page": 0,
+          "line": null,
+          "score": "sample",
+          "snippet": "S E C T I O N\nI\nIntroduction to \nEmbedded Systems"
+        },
+        {
+          "rank": 3,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 2",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 2",
+          "page": 2,
+          "line": null,
+          "score": "sample",
+          "snippet": "3\nIntroduction to Embedded Systems\nThe ﬁeld of embedded systems is wide and varied, and it is difﬁcult to pin down exact deﬁ-\nnitions or descriptions. However, Chapter 1 introduces a useful model that can be applied \nto any embedded system. This model is introduced as a means for the reader to understand \nthe major components that make up different types of electronic devices, regardless of their \ncomplexity or differences. Chapter 2 introduces and deﬁnes the common standards adhered to \nwhen building an embedded system. Because this book is an overview of embedded systems \narchitecture, covering every possible standards-based component that could be implemented is \nbeyond its scope. Therefore, signiﬁcant examples of current standards-based components were \nselected, such as networking and Java, to demonstrate how standards deﬁne major components \nin an embedded system. The intention is for the reader to be able to use the methodology \nbehind the model, standards, and real-world examples to understand any embedded system, \nand to be able to apply any other standard to an embedded system’s design."
+        },
+        {
+          "rank": 5,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 4",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 4",
+          "page": 4,
+          "line": null,
+          "score": "sample",
+          "snippet": "5\nC H A P T E R 1\nA Systems Engineering Approach \nto Embedded Systems Design\n1.1  What Is an Embedded System?\nAn embedded system is an applied computer system, as distinguished from other types of com-\nputer systems such as personal computers (PCs) or supercomputers. However, you will ﬁnd \nthat the deﬁnition of “embedded system” is ﬂuid and difﬁcult to pin down, as it constantly \nevolves with advances in technology and dramatic decreases in the cost of implementing vari-\nous hardware and software components. In recent years, the ﬁeld has outgrown many of its \ntraditional descriptions. Because the reader will likely encounter some of these descriptions \nand deﬁnitions, it is important to understand the reasoning behind them and why they may \nor may not be accurate today, and to be able to discuss them knowledgeably. Following are a \nfew of the more common descriptions of an embedded system:\n• Embedded systems are more limited in hardware and/or software functionality than \na personal computer (PC). This holds true for a signiﬁcant subset of the embed\n-\nded systems family of computer systems. In terms of hardware limitations, this can \nmean limitations in processing performance, powe"
+        },
+        {
+          "rank": 6,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 5",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 5",
+          "page": 5,
+          "line": null,
+          "score": "sample",
+          "snippet": "Chapter 1\n6\nfunctions unrelated to the “TV” function but just as important, such as e-mail, web \nbrowsing, and games.\n• An embedded system is a computer system with higher quality and reliability require-\nments than other types of computer systems. Some families of embedded devices \nhave a very high threshold of quality and reliability requirements. For example, if a \ncar’s engine controller crashes while driving on a busy freeway or a critical medical \ndevice malfunctions during surgery, very serious problems result. However, there are \nalso embedded devices, such as TVs, games, and cell phones, in which a malfunction \nis an inconvenience but not usually a life-threatening situation.\n• Some devices that are called embedded systems, such as PDAs or web pads, are not \nreally embedded systems. There is some discussion as to whether or not computer \nsystems that meet some, but not all of the traditional embedded system deﬁnitions are \nactually embedded systems or something else. Some feel that the designation of these \nmore complex designs, such as PDAs, as embedded systems is driven by nontechnical \nmarketing and sales professionals, rather than engineers. In reality, embedded engi\n-"
+        },
+        {
+          "rank": 7,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 6",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 6",
+          "page": 6,
+          "line": null,
+          "score": "sample",
+          "snippet": "A Systems Engineering Approach to Embedded Systems Design\n7\nMarket Embedded Device\nIndustrial Control Robotics and Control Systems (Manufacturing)\nMedical Infusion Pumps\nDialysis Machines\nProsthetic Devices\nCardiac Monitors\nNetworking Routers\nHubs\nGateways\nOfﬁce Automation Fax Machine\nPhotocopier\nPrinters\nMonitors\nScanners\n1.2  Embedded Systems Design\nWhen approaching embedded systems architecture design from a systems engineering point \nof view, several models can be applied to describe the cycle of embedded system design. \nMost of these models are based upon one or some combination of the following development \nmodels:[1-5]\n• The big-bang model, in which there is essentially no planning or processes in place \nbefore and during the development of a system.\n• The code-and-ﬁx model, in which product requirements are deﬁned but no formal \nprocesses are in place before the start of development.\n• The waterfall model, in which there is a process for developing a system in steps, \nwhere results of one step ﬂow into the next step. \n• The spiral model, in which there is a process for developing a system in steps, and \nthroughout the various steps, feedback is obtained and incorporated bac"
+        },
+        {
+          "rank": 8,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 7",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 7",
+          "page": 7,
+          "line": null,
+          "score": "sample",
+          "snippet": "Chapter 1\n8\nFigure 1-1: Embedded Systems Design and Development Lifecycle Model [1-2]\nmaintaining the system. Most of this book is dedicated to discussing phase 1, and the rest of \nthis chapter is dedicated to discussing why so much of this book has been devoted to creating \nan embedded system’s architecture.\nWithin this text, phase 1 is deﬁned as being made up of six stages: having a strong techni-\ncal foundation (stage 1), understanding the Architectural Business Cycle (stage 2), deﬁning \nthe architectural patterns and models (stage 3), deﬁning the architectural structures (stage 4), \ndocumenting the architecture (stage 5), and analyzing and reviewing the architecture (stage \n6)[1-3]. Chapters 2–10 focus on providing a strong technical foundation for understanding the \nmajor components of an embedded system design. Chapter 11 discusses the remaining stages \nof phase 1, and Chapter 12 introduces the last three phases.\n Product \nConcept \nPreliminary  Analysis \nof  Requirements  \nCreation of \nArchitecture Design \nDevelop Version of \nArchitecture \nDeliver Version of \nArchitecture \nReview and Obtain \nFeedback  \nIncorporate \nFeedback \nDeliver Final Version \nof Architecture \nDevelop [Im"
+        },
+        {
+          "rank": 9,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 8",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 8",
+          "page": 8,
+          "line": null,
+          "score": "sample",
+          "snippet": "A Systems Engineering Approach to Embedded Systems Design\n9\n1.3  An Introduction to Embedded Systems Architecture\nThe architecture of an embedded system is an abstraction of the embedded device, meaning \nthat it is a generalization of the system that typically doesn’t show detailed implementation \ninformation such as software source code or hardware circuit design. At the architectural \nlevel, the hardware and software components in an embedded system are instead represented \nas some composition of interacting elements. Elements are representations of hardware and/or \nsoftware whose implementation details have been abstracted out, leaving only behavioral \nand inter-relationship information. Architectural elements can be internally integrated within \nthe embedded device, or exist externally to the embedded system and interact with internal \nelements. In short, an embedded architecture includes elements of the embedded system, ele-\nments interacting with an embedded system, the properties of each of the individual elements, \nand the interactive relationships between the elements.  \nArchitecture-level information is physically represented in the form of structures. A structure \nis one"
+        },
+        {
+          "rank": 10,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 9",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 9",
+          "page": 9,
+          "line": null,
+          "score": "sample",
+          "snippet": "Chapter 1\n10\nTable 1-2: Examples of architectural structures [1-4]\nStructure Types* Deﬁnition\nModule Elements (referred to as modules) are deﬁned as the different functional components \n(the essential hardware and/or software that the system needs to function correctly) \nwithin an embedded device. Marketing and sales architectural diagrams are typically \nrepresented as modular structures, since software or hardware is typically packaged for \nsale as modules (i.e., an operating system, a processor, a JVM, and so on). \nUses (also referred to as \nsubsystem and component)\nA type of modular structure representing system at runtime in which modules are \ninter-related by their usages (what module uses what other module, for example).\nLayers A type of Uses structure in which modules are organized in layers (i.e., hierarchical) in \nwhich modules in higher layers use (require) modules of lower layers.\nKernel Structure presents modules that use modules (services) of an operating system kernel \nor are manipulated by the kernel.\nChannel  \nArchitecture\nStructure presents modules sequentially, showing the module transformations through \ntheir usages.\nVirtual  \nMachine\nStructure presents modules t"
+        }
+      ],
+      "trace_id": "prompt_0b1ecf741405",
+      "evaluation_id": "eval_313cd863e2e7"
+    },
+    {
+      "message_id": "msg_fcc7f17dc3c3",
+      "role": "user",
+      "content": "اشرحلي الفايل",
+      "created_at": "2026-05-31T06:59:19+00:00",
+      "agent": null,
+      "docs": [],
+      "trace_id": null,
+      "evaluation_id": null
+    },
+    {
+      "message_id": "msg_7d5f6fae2d79",
+      "role": "assistant",
+      "content": "# بحث الويب\nتم جلب مصادر الويب التالية:\n- اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA\n- [اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar\n- إشرحلي — المعلم الذكي | https://www.ashrhly.com\n- شرح ملف PDF - مجاني 100% وعبر الإنترنت | https://tools.pdf24.org/ar/annotate-pdf\n- A step-by-step guide to using the PDF Reader app | https://www.youtube.com/watch?v=QjYMFY6zyLo\n\n# الملخص\n# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوعات متعددة تتعلق بالتعليم والتكنولوجيا، مع التركيز على كيفية استخدام أدوات الذكاء الاصطناعي في التعليم. يعتبر هذا الموضوع مهمًا لأنه يعكس الاتجاهات الحديثة في التعليم وكيف يمكن للتكنولوجيا أن تسهم في تحسين تجربة التعلم. يطرح الملف أيضًا مشكلات تتعلق بالتحصيل الدراسي وكيفية استخدام أدوات مثل الذكاء الاصطناعي لمساعدة الطلاب على فهم المواد الدراسية بشكل أفضل.\n\n## 2. خريطة المحتوى\n- **أهمية علوم البيانات والذكاء الاصطناعي**: يتناول هذا المحور كيف يمكن لعلوم البيانات والذكاء الاصطناعي أن تعزز من التعلم. يحتاج الطالب لفهم هذا المحور لأنه يوضح كيف يمكن استخدام هذه الأدوات لتحسين الأداء الأكاديمي.\n  \n- **نظام ملفات لينكس**: يشرح هذا المحور كيفية عمل نظام ملفات لينكس وأهميته. يحتاج الطالب لفهم هذا النظام لأنه يعد جزءًا أساسيًا من علوم الحاسوب.\n\n- **أدوات التعلم الذكي**: يتحدث عن أدوات مثل \"المعلم الذكي\" وكيف يمكن أن تساعد الطلاب في التعلم. يحتاج الطالب لفهم هذه الأدوات لتسهيل عملية التعلم.\n\n## 3. الشرح التفصيلي\nفي البداية، يجب على الطلاب فهم أهمية علوم البيانات والذكاء الاصطناعي، حيث يمكن لهذه العلوم أن توفر رؤى قيمة تساعد في تحسين الأداء الأكاديمي. يمكن للطلاب استخدام هذه الأدوات لتحليل بياناتهم الدراسية وفهم نقاط القوة والضعف لديهم.\n\nبعد ذلك، يأتي الحديث عن نظام ملفات لينكس. يجب على الطلاب التعرف على كيفية تنظيم البيانات في هذا النظام، حيث يعد فهم كيفية عمل أنظمة التشغيل أمرًا ضروريًا في مجال الحاسوب.\n\nثم ننتقل إلى أدوات التعلم الذكي، مثل \"المعلم الذكي\". هذه الأدوات تستخدم الذكاء الاصطناعي لتقديم محتوى تعليمي مخصص للطلاب، مما يساعدهم على التعلم بشكل أكثر فعالية.\n\n## 4. المفاهيم والمصطلحات المهمة\n\n| المصطلح                | معناه                                               | دوره داخل الملف                          |\n|-----------------------|----------------------------------------------------|------------------------------------------|\n| علوم البيانات         | مجال يركز على تحليل البيانات واستخراج المعلومات  | يوضح كيف يمكن استخدام البيانات لتحسين التعلم |\n| الذكاء الاصطناعي     | تقنية تحاكي الذكاء البشري في معالجة المعلومات    | تعزز من أدوات التعلم وتساعد الطلاب      |\n| نظام ملفات لينكس     | طريقة لتنظيم البيانات في نظام التشغيل لينكس      | أساسي لفهم كيفية عمل أنظمة التشغيل      |\n| المعلم الذكي          | أداة تستخدم الذكاء الاصطناعي لتعليم الطلاب       | تسهل عملية التعلم وتقدم محتوى مخصص     |\n\n## 5. مثال تطبيقي كامل\nتخيل طالبًا يُدعى أحمد، يواجه صعوبة في فهم مادة الرياضيات. قرر أحمد استخدام \"المعلم الذكي\" لمساعدته. بدأ بتحديد المشكلة، وهي عدم فهمه لمفهوم معين في الجبر. استخدم أحمد الأداة لتحديد نقاط ضعفه، حيث قدمت له تمارين مخصصة. بعد عدة محاولات، بدأ أحمد في فهم المفهوم بشكل أفضل. في النهاية، تمكن من تحسين درجاته في المادة بفضل استخدام التكنولوجيا.\n\n## 6. ماذا تذاكر أولا\n1. أهمية علوم البيانات والذكاء الاصطناعي.\n2. نظام ملفات لينكس.\n3. أدوات التعلم الذكي.\n4. كيفية استخدام \"المعلم الذكي\".\n5. تطبيقات الذكاء الاصطناعي في التعليم.\n6. تحليل البيانات لتحسين الأداء الأكاديمي.\n7. استراتيجيات التعلم الفعالة.\n8. كيفية تنظيم المعلومات في أنظمة التشغيل.\n\n## 7. الدليل من الملف\n- تم الاستناد إلى أهمية علوم البيانات والذكاء الاصطناعي من [ويب 1].\n- تم استخدام نظام ملفات لينكس من [ويب 2].\n- تم التطرق إلى أدوات التعلم الذكي من [ويب 3].\n\n## 8. خلاصة سريعة\nيتناول الملف أهمية استخدام التكنولوجيا في التعليم، مع التركيز على علوم البيانات والذكاء الاصطناعي. كما يشرح كيفية عمل نظام ملفات لينكس وأدوات التعلم الذكي. من الضروري للطلاب فهم هذه المفاهيم لتحسين أدائهم الأكاديمي والاستفادة من التكنولوجيا بشكل فعال.\n\n---\n\n# المراجع المستخدمة\n## ويب\n- مرجع ويب 1: اشرح لي، https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA\n- مرجع ويب 2: [اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs، https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar\n- مرجع ويب 3: إشرحلي — المعلم الذكي، https://www.ashrhly.com\n- مرجع ويب 4: شرح ملف PDF - مجاني 100% وعبر الإنترنت، https://tools.pdf24.org/ar/annotate-pdf\n- مرجع ويب 5: A step-by-step guide to using the PDF Reader app، https://www.youtube.com/watch?v=QjYMFY6zyLo\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "created_at": "2026-05-31T06:59:31+00:00",
+      "agent": "Summary",
+      "docs": [],
+      "trace_id": "prompt_1574412e82fe",
+      "evaluation_id": "eval_80578db0c621"
+    }
+  ],
+  "traces": [
+    {
+      "prompt_id": "prompt_1f36e5f0fa81",
+      "chat_id": "b733493b5420",
+      "user_query": "اشرحلي الفايل",
+      "selected_agent": "RAG Tutor",
+      "retrieved_docs": [
+        {
+          "rank": 1,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 2",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 2",
+          "page": 2,
+          "line": null,
+          "score": 12.567960739135742,
+          "snippet": "3\nIntroduction to Embedded Systems\nThe ﬁeld of embedded systems is wide and varied, and it is difﬁcult to pin down exact deﬁ-\nnitions or descriptions. However, Chapter 1 introduces a useful model that can be applied \nto any embedded system. This model is introduced as a means for the reader to understand \nthe major components that make up different types of electronic devices, regardless of their \ncomplexity or differences. Chapter 2 introduces and deﬁnes the common standards adhered to \nwhen building an embedded system. Because this book is an overview of embedded systems \narchitecture, covering every possible standards-based component that could be implemented is \nbeyond its scope. Therefo"
+        },
+        {
+          "rank": 2,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 6",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 6",
+          "page": 6,
+          "line": null,
+          "score": 13.247791290283203,
+          "snippet": "A Systems Engineering Approach to Embedded Systems Design\n7\nMarket Embedded Device\nIndustrial Control Robotics and Control Systems (Manufacturing)\nMedical Infusion Pumps\nDialysis Machines\nProsthetic Devices\nCardiac Monitors\nNetworking Routers\nHubs\nGateways\nOfﬁce Automation Fax Machine\nPhotocopier\nPrinters\nMonitors\nScanners\n1.2  Embedded Systems Design\nWhen approaching embedded systems architecture design from a systems engineering point \nof view, several models can be applied to describe the cycle of embedded system design. \nMost of these models are based upon one or some combination of the following development \nmodels:[1-5]\n• The big-bang model, in which there is essentially no planning or"
+        },
+        {
+          "rank": 3,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 6",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 6",
+          "page": 6,
+          "line": null,
+          "score": 13.598169326782227,
+          "snippet": "processes are in place before the start of development.\n• The waterfall model, in which there is a process for developing a system in steps, \nwhere results of one step ﬂow into the next step. \n• The spiral model, in which there is a process for developing a system in steps, and \nthroughout the various steps, feedback is obtained and incorporated back into the \nprocess.\nThis book supports the model shown in Figure 1-1, which I refer to as the Embedded Sys-\ntems Design and Development Lifecycle Model. This model is based on a combination of the \npopular waterfall and spiral industry models.\n[1-2] When I investigated and analyzed the many \nsuccessful embedded projects that I have been a part of"
+        },
+        {
+          "rank": 4,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 11",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 11",
+          "page": 11,
+          "line": null,
+          "score": 13.811653137207031,
+          "snippet": "Chapter 1\n12\nelements within an embedded system works in a vacuum. Every element within a \ndevice interacts with some other element in some fashion. Furthermore, externally \nvisible characteristics of elements may differ given a different set of other elements to \nwork with. Without understanding the “whys” behind an element’s provided function\n-\nality, performance, and so on, it would be difﬁcult to determine how the system would \nbehave under a variety of circumstances in the real world. \nEven if the architectural structures are rough and informal, it is still better than nothing. As \nlong as the architecture conveys in some way the critical components of a design and their re-\nlationships"
+        }
+      ],
+      "tools_used": [
+        "document_search"
+      ],
+      "component_steps": [
+        {
+          "name": "Planner",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "tutor_rag | tasks=1 | openai:gpt-4o-mini",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:19+00:00",
+          "end_time": "2026-05-31T06:50:19+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Document Search",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "docs=4",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:20+00:00",
+          "end_time": "2026-05-31T06:50:20+00:00",
+          "duration_ms": 62,
+          "error": null
+        },
+        {
+          "name": "Arabic Guard",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "skipped for graph-authored direct answer",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:20+00:00",
+          "end_time": "2026-05-31T06:50:20+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Citation Checker",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "{'name': 'citation_checker', 'passed': False, 'sources_exist': True, 'message': 'توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.'}",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:20+00:00",
+          "end_time": "2026-05-31T06:50:20+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Evaluation",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "{'evaluation_id': 'eval_fc43264b873c', 'status': 'completed', 'overall_score': 5.1, 'rubric': {'Answer follows requested language': 3, 'Uses retrieved context': 5, 'Does not hallucinate unsupported claims': 5, 'Clear structure': 4, 'Correct",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:20+00:00",
+          "end_time": "2026-05-31T06:50:20+00:00",
+          "duration_ms": 2,
+          "error": null
+        },
+        {
+          "name": "Save Trace",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "trace ready",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:20+00:00",
+          "end_time": "2026-05-31T06:50:20+00:00",
+          "duration_ms": 0,
+          "error": null
+        }
+      ],
+      "timings_ms": {
+        "planner_ms": 0,
+        "document_search_ms": 62,
+        "arabic_guard_ms": 0,
+        "citation_checker_ms": 0,
+        "evaluation_ms": 2,
+        "save_trace_ms": 0,
+        "total_response_ms": 110
+      },
+      "final_answer": "# الإجابة\nلم أجد دليلا واضحا في المستندات الحالية يربط سؤالك بمحتوى الملفات، والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذا كان السؤال عاما أو حديثا.\n\n# المصدر\n- سياسة اختيار المصادر\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "evaluation_result": {
+        "evaluation_id": "eval_fc43264b873c",
+        "status": "completed",
+        "overall_score": 5.1,
+        "rubric": {
+          "Answer follows requested language": 3,
+          "Uses retrieved context": 5,
+          "Does not hallucinate unsupported claims": 5,
+          "Clear structure": 4,
+          "Correct technical explanation": 7,
+          "Cites sources": 3,
+          "Completeness": 5,
+          "Conciseness according to request": 8,
+          "Educational usefulness": 6,
+          "Formatting quality": 5
+        },
+        "deterministic_checks": [
+          {
+            "name": "arabic_language",
+            "passed": false,
+            "expected": "Arabic answer with only necessary English technical terms",
+            "actual": {
+              "arabic_ratio": 0.83,
+              "disallowed_language": true,
+              "word_count": 58,
+              "disallowed_latin_words": [
+                "Documents",
+                "only.",
+                "Source",
+                "mode",
+                "Web"
+              ],
+              "disallowed_latin_occurrences": [
+                {
+                  "word": "Documents",
+                  "position": 111,
+                  "context": "والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl"
+                },
+                {
+                  "word": "only.",
+                  "position": 121,
+                  "context": "الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D"
+                },
+                {
+                  "word": "Source",
+                  "position": 132,
+                  "context": "مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W"
+                },
+                {
+                  "word": "mode",
+                  "position": 139,
+                  "context": "في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ"
+                },
+                {
+                  "word": "Web",
+                  "position": 148,
+                  "context": "cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال"
+                }
+              ],
+              "disallowed_script_samples": []
+            }
+          },
+          {
+            "name": "required_learning_structure",
+            "passed": false,
+            "expected": [
+              "الفكرة",
+              "الشرح",
+              "مثال",
+              "الدليل",
+              "خلاصة"
+            ],
+            "actual": []
+          },
+          {
+            "name": "source_grounding",
+            "passed": false,
+            "expected": [
+              "file sources"
+            ],
+            "actual": {
+              "has_source_section": false,
+              "mentions_files": true,
+              "mentions_web": true,
+              "mentions_model": false
+            }
+          }
+        ],
+        "llm_judge": null,
+        "gold_standard": null,
+        "rubric_reasons": {
+          "Answer follows requested language": "نسبة الحروف العربية: 0.83. عدد الكلمات: 58. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: Documents, only., Source, mode, Web. أمثلة من النص: `Documents` في: \"والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl\" | `only.` في: \"الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D\" | `Source` في: \"مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W\" | `mode` في: \"في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ\" | `Web` في: \"cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال\".",
+          "Uses retrieved context": "No file context was available or the answer did not clearly connect claims to retrieved sources.",
+          "Does not hallucinate unsupported claims": "Source grounding failed, so unsupported claims are possible.",
+          "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: [].",
+          "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+          "Cites sources": "Source check details: {'has_source_section': False, 'mentions_files': True, 'mentions_web': True, 'mentions_model': False}",
+          "Completeness": "Answer length is 317 characters.",
+          "Conciseness according to request": "Answer length is 317 characters; requested line/word/quiz checks may lower this.",
+          "Educational usefulness": "Looks for an example and a study summary in the answer.",
+          "Formatting quality": "Markdown heading count: 2."
+        },
+        "recommendations": [
+          "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: Documents, only., Source, mode, Web.",
+          "أضف بنية تعليمية واضحة: مختصر، شرح، مثال، مصادر، وملخص.",
+          "اربط الإجابة بوضوح بمصادر الملفات أو الويب أو اذكر أنها من معرفة النموذج."
+        ],
+        "created_at": "2026-05-31T06:50:20+00:00"
+      },
+      "created_at": "2026-05-31T06:50:19+00:00",
+      "route": [
+        "LangGraph",
+        "tutor_rag"
+      ],
+      "web_sources": [],
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "profile": "openai_gpt_4o_mini"
+      },
+      "planner": {
+        "route": "tutor_rag",
+        "tasks": [
+          {
+            "type": "explain",
+            "title": "الشرح"
+          }
+        ],
+        "needs_documents": true,
+        "needs_web": false,
+        "answer_style": "direct"
+      },
+      "citation_check": {
+        "name": "citation_checker",
+        "passed": false,
+        "sources_exist": true,
+        "message": "توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح."
+      },
+      "graph_state_summary": {
+        "route": "tutor_rag",
+        "next_action": "final",
+        "docs": 4,
+        "web_sources": 0,
+        "tools_used": [
+          "document_search"
+        ],
+        "has_quiz": false,
+        "has_quiz_result": false,
+        "tasks": [
+          {
+            "type": "explain",
+            "title": "الشرح"
+          }
+        ],
+        "task_results": [],
+        "final_sections": 0,
+        "is_multi_task": false
+      }
+    },
+    {
+      "prompt_id": "prompt_4d190d0416b8",
+      "chat_id": "b733493b5420",
+      "user_query": "اشرح",
+      "selected_agent": "RAG Tutor",
+      "retrieved_docs": [
+        {
+          "rank": 1,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 2",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 2",
+          "page": 2,
+          "line": null,
+          "score": 14.63378620147705,
+          "snippet": "3\nIntroduction to Embedded Systems\nThe ﬁeld of embedded systems is wide and varied, and it is difﬁcult to pin down exact deﬁ-\nnitions or descriptions. However, Chapter 1 introduces a useful model that can be applied \nto any embedded system. This model is introduced as a means for the reader to understand \nthe major components that make up different types of electronic devices, regardless of their \ncomplexity or differences. Chapter 2 introduces and deﬁnes the common standards adhered to \nwhen building an embedded system. Because this book is an overview of embedded systems \narchitecture, covering every possible standards-based component that could be implemented is \nbeyond its scope. Therefo"
+        },
+        {
+          "rank": 2,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 4",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 4",
+          "page": 4,
+          "line": null,
+          "score": 15.645960807800293,
+          "snippet": "5\nC H A P T E R 1\nA Systems Engineering Approach \nto Embedded Systems Design\n1.1  What Is an Embedded System?\nAn embedded system is an applied computer system, as distinguished from other types of com-\nputer systems such as personal computers (PCs) or supercomputers. However, you will ﬁnd \nthat the deﬁnition of “embedded system” is ﬂuid and difﬁcult to pin down, as it constantly \nevolves with advances in technology and dramatic decreases in the cost of implementing vari-\nous hardware and software components. In recent years, the ﬁeld has outgrown many of its \ntraditional descriptions. Because the reader will likely encounter some of these descriptions \nand deﬁnitions, it is important to unde"
+        },
+        {
+          "rank": 3,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 11",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 11",
+          "page": 11,
+          "line": null,
+          "score": 16.127595901489258,
+          "snippet": "Chapter 1\n12\nelements within an embedded system works in a vacuum. Every element within a \ndevice interacts with some other element in some fashion. Furthermore, externally \nvisible characteristics of elements may differ given a different set of other elements to \nwork with. Without understanding the “whys” behind an element’s provided function\n-\nality, performance, and so on, it would be difﬁcult to determine how the system would \nbehave under a variety of circumstances in the real world. \nEven if the architectural structures are rough and informal, it is still better than nothing. As \nlong as the architecture conveys in some way the critical components of a design and their re-\nlationships"
+        },
+        {
+          "rank": 4,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 7",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 7",
+          "page": 7,
+          "line": null,
+          "score": 16.947612762451172,
+          "snippet": "Chapter 1\n8\nFigure 1-1: Embedded Systems Design and Development Lifecycle Model [1-2]\nmaintaining the system. Most of this book is dedicated to discussing phase 1, and the rest of \nthis chapter is dedicated to discussing why so much of this book has been devoted to creating \nan embedded system’s architecture.\nWithin this text, phase 1 is deﬁned as being made up of six stages: having a strong techni-\ncal foundation (stage 1), understanding the Architectural Business Cycle (stage 2), deﬁning \nthe architectural patterns and models (stage 3), deﬁning the architectural structures (stage 4), \ndocumenting the architecture (stage 5), and analyzing and reviewing the architecture (stage \n6)[1-3]. Chap"
+        }
+      ],
+      "tools_used": [
+        "document_search"
+      ],
+      "component_steps": [
+        {
+          "name": "Planner",
+          "input_summary": "اشرح",
+          "output_summary": "tutor_rag | tasks=1 | openai:gpt-4o-mini",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:38+00:00",
+          "end_time": "2026-05-31T06:50:38+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Document Search",
+          "input_summary": "اشرح",
+          "output_summary": "docs=4",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:39+00:00",
+          "end_time": "2026-05-31T06:50:39+00:00",
+          "duration_ms": 86,
+          "error": null
+        },
+        {
+          "name": "Arabic Guard",
+          "input_summary": "اشرح",
+          "output_summary": "skipped for graph-authored direct answer",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:39+00:00",
+          "end_time": "2026-05-31T06:50:39+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Citation Checker",
+          "input_summary": "اشرح",
+          "output_summary": "{'name': 'citation_checker', 'passed': False, 'sources_exist': True, 'message': 'توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.'}",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:39+00:00",
+          "end_time": "2026-05-31T06:50:39+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Evaluation",
+          "input_summary": "اشرح",
+          "output_summary": "{'evaluation_id': 'eval_0d6942453344', 'status': 'completed', 'overall_score': 5.1, 'rubric': {'Answer follows requested language': 3, 'Uses retrieved context': 5, 'Does not hallucinate unsupported claims': 5, 'Clear structure': 4, 'Correct",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:39+00:00",
+          "end_time": "2026-05-31T06:50:39+00:00",
+          "duration_ms": 8,
+          "error": null
+        },
+        {
+          "name": "Save Trace",
+          "input_summary": "اشرح",
+          "output_summary": "trace ready",
+          "status": "ok",
+          "start_time": "2026-05-31T06:50:39+00:00",
+          "end_time": "2026-05-31T06:50:39+00:00",
+          "duration_ms": 0,
+          "error": null
+        }
+      ],
+      "timings_ms": {
+        "planner_ms": 0,
+        "document_search_ms": 86,
+        "arabic_guard_ms": 0,
+        "citation_checker_ms": 0,
+        "evaluation_ms": 8,
+        "save_trace_ms": 0,
+        "total_response_ms": 172
+      },
+      "final_answer": "# الإجابة\nلم أجد دليلا واضحا في المستندات الحالية يربط سؤالك بمحتوى الملفات، والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذا كان السؤال عاما أو حديثا.\n\n# المصدر\n- سياسة اختيار المصادر\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "evaluation_result": {
+        "evaluation_id": "eval_0d6942453344",
+        "status": "completed",
+        "overall_score": 5.1,
+        "rubric": {
+          "Answer follows requested language": 3,
+          "Uses retrieved context": 5,
+          "Does not hallucinate unsupported claims": 5,
+          "Clear structure": 4,
+          "Correct technical explanation": 7,
+          "Cites sources": 3,
+          "Completeness": 5,
+          "Conciseness according to request": 8,
+          "Educational usefulness": 6,
+          "Formatting quality": 5
+        },
+        "deterministic_checks": [
+          {
+            "name": "arabic_language",
+            "passed": false,
+            "expected": "Arabic answer with only necessary English technical terms",
+            "actual": {
+              "arabic_ratio": 0.83,
+              "disallowed_language": true,
+              "word_count": 58,
+              "disallowed_latin_words": [
+                "Documents",
+                "only.",
+                "Source",
+                "mode",
+                "Web"
+              ],
+              "disallowed_latin_occurrences": [
+                {
+                  "word": "Documents",
+                  "position": 111,
+                  "context": "والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl"
+                },
+                {
+                  "word": "only.",
+                  "position": 121,
+                  "context": "الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D"
+                },
+                {
+                  "word": "Source",
+                  "position": 132,
+                  "context": "مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W"
+                },
+                {
+                  "word": "mode",
+                  "position": 139,
+                  "context": "في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ"
+                },
+                {
+                  "word": "Web",
+                  "position": 148,
+                  "context": "cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال"
+                }
+              ],
+              "disallowed_script_samples": []
+            }
+          },
+          {
+            "name": "required_learning_structure",
+            "passed": false,
+            "expected": [
+              "الفكرة",
+              "الشرح",
+              "مثال",
+              "الدليل",
+              "خلاصة"
+            ],
+            "actual": []
+          },
+          {
+            "name": "source_grounding",
+            "passed": false,
+            "expected": [
+              "file sources"
+            ],
+            "actual": {
+              "has_source_section": false,
+              "mentions_files": true,
+              "mentions_web": true,
+              "mentions_model": false
+            }
+          }
+        ],
+        "llm_judge": null,
+        "gold_standard": null,
+        "rubric_reasons": {
+          "Answer follows requested language": "نسبة الحروف العربية: 0.83. عدد الكلمات: 58. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: Documents, only., Source, mode, Web. أمثلة من النص: `Documents` في: \"والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl\" | `only.` في: \"الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D\" | `Source` في: \"مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W\" | `mode` في: \"في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ\" | `Web` في: \"cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال\".",
+          "Uses retrieved context": "No file context was available or the answer did not clearly connect claims to retrieved sources.",
+          "Does not hallucinate unsupported claims": "Source grounding failed, so unsupported claims are possible.",
+          "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: [].",
+          "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+          "Cites sources": "Source check details: {'has_source_section': False, 'mentions_files': True, 'mentions_web': True, 'mentions_model': False}",
+          "Completeness": "Answer length is 317 characters.",
+          "Conciseness according to request": "Answer length is 317 characters; requested line/word/quiz checks may lower this.",
+          "Educational usefulness": "Looks for an example and a study summary in the answer.",
+          "Formatting quality": "Markdown heading count: 2."
+        },
+        "recommendations": [
+          "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: Documents, only., Source, mode, Web.",
+          "أضف بنية تعليمية واضحة: مختصر، شرح، مثال، مصادر، وملخص.",
+          "اربط الإجابة بوضوح بمصادر الملفات أو الويب أو اذكر أنها من معرفة النموذج."
+        ],
+        "created_at": "2026-05-31T06:50:39+00:00"
+      },
+      "created_at": "2026-05-31T06:50:38+00:00",
+      "route": [
+        "LangGraph",
+        "tutor_rag"
+      ],
+      "web_sources": [],
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "profile": "openai_gpt_4o_mini"
+      },
+      "planner": {
+        "route": "tutor_rag",
+        "tasks": [
+          {
+            "type": "explain",
+            "title": "الشرح"
+          }
+        ],
+        "needs_documents": true,
+        "needs_web": false,
+        "answer_style": "direct"
+      },
+      "citation_check": {
+        "name": "citation_checker",
+        "passed": false,
+        "sources_exist": true,
+        "message": "توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح."
+      },
+      "graph_state_summary": {
+        "route": "tutor_rag",
+        "next_action": "final",
+        "docs": 4,
+        "web_sources": 0,
+        "tools_used": [
+          "document_search"
+        ],
+        "has_quiz": false,
+        "has_quiz_result": false,
+        "tasks": [
+          {
+            "type": "explain",
+            "title": "الشرح"
+          }
+        ],
+        "task_results": [],
+        "final_sections": 0,
+        "is_multi_task": false
+      }
+    },
+    {
+      "prompt_id": "prompt_0b1ecf741405",
+      "chat_id": "b733493b5420",
+      "user_query": "اشرحلي الفايل",
+      "selected_agent": "Summary",
+      "retrieved_docs": [
+        {
+          "rank": 1,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 0",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 0",
+          "page": 0,
+          "line": null,
+          "score": "sample",
+          "snippet": "S E C T I O N\nI\nIntroduction to \nEmbedded Systems"
+        },
+        {
+          "rank": 3,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 2",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 2",
+          "page": 2,
+          "line": null,
+          "score": "sample",
+          "snippet": "3\nIntroduction to Embedded Systems\nThe ﬁeld of embedded systems is wide and varied, and it is difﬁcult to pin down exact deﬁ-\nnitions or descriptions. However, Chapter 1 introduces a useful model that can be applied \nto any embedded system. This model is introduced as a means for the reader to understand \nthe major components that make up different types of electronic devices, regardless of their \ncomplexity or differences. Chapter 2 introduces and deﬁnes the common standards adhered to \nwhen building an embedded system. Because this book is an overview of embedded systems \narchitecture, covering every possible standards-based component that could be implemented is \nbeyond its scope. Therefore, signiﬁcant examples of current standards-based components were \nselected, such as networking and Java, to demonstrate how standards deﬁne major components \nin an embedded system. The intention is for the reader to be able to use the methodology \nbehind the model, standards, and real-world examples to understand any embedded system, \nand to be able to apply any other standard to an embedded system’s design."
+        },
+        {
+          "rank": 5,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 4",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 4",
+          "page": 4,
+          "line": null,
+          "score": "sample",
+          "snippet": "5\nC H A P T E R 1\nA Systems Engineering Approach \nto Embedded Systems Design\n1.1  What Is an Embedded System?\nAn embedded system is an applied computer system, as distinguished from other types of com-\nputer systems such as personal computers (PCs) or supercomputers. However, you will ﬁnd \nthat the deﬁnition of “embedded system” is ﬂuid and difﬁcult to pin down, as it constantly \nevolves with advances in technology and dramatic decreases in the cost of implementing vari-\nous hardware and software components. In recent years, the ﬁeld has outgrown many of its \ntraditional descriptions. Because the reader will likely encounter some of these descriptions \nand deﬁnitions, it is important to understand the reasoning behind them and why they may \nor may not be accurate today, and to be able to discuss them knowledgeably. Following are a \nfew of the more common descriptions of an embedded system:\n• Embedded systems are more limited in hardware and/or software functionality than \na personal computer (PC). This holds true for a signiﬁcant subset of the embed\n-\nded systems family of computer systems. In terms of hardware limitations, this can \nmean limitations in processing performance, powe"
+        },
+        {
+          "rank": 6,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 5",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 5",
+          "page": 5,
+          "line": null,
+          "score": "sample",
+          "snippet": "Chapter 1\n6\nfunctions unrelated to the “TV” function but just as important, such as e-mail, web \nbrowsing, and games.\n• An embedded system is a computer system with higher quality and reliability require-\nments than other types of computer systems. Some families of embedded devices \nhave a very high threshold of quality and reliability requirements. For example, if a \ncar’s engine controller crashes while driving on a busy freeway or a critical medical \ndevice malfunctions during surgery, very serious problems result. However, there are \nalso embedded devices, such as TVs, games, and cell phones, in which a malfunction \nis an inconvenience but not usually a life-threatening situation.\n• Some devices that are called embedded systems, such as PDAs or web pads, are not \nreally embedded systems. There is some discussion as to whether or not computer \nsystems that meet some, but not all of the traditional embedded system deﬁnitions are \nactually embedded systems or something else. Some feel that the designation of these \nmore complex designs, such as PDAs, as embedded systems is driven by nontechnical \nmarketing and sales professionals, rather than engineers. In reality, embedded engi\n-"
+        },
+        {
+          "rank": 7,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 6",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 6",
+          "page": 6,
+          "line": null,
+          "score": "sample",
+          "snippet": "A Systems Engineering Approach to Embedded Systems Design\n7\nMarket Embedded Device\nIndustrial Control Robotics and Control Systems (Manufacturing)\nMedical Infusion Pumps\nDialysis Machines\nProsthetic Devices\nCardiac Monitors\nNetworking Routers\nHubs\nGateways\nOfﬁce Automation Fax Machine\nPhotocopier\nPrinters\nMonitors\nScanners\n1.2  Embedded Systems Design\nWhen approaching embedded systems architecture design from a systems engineering point \nof view, several models can be applied to describe the cycle of embedded system design. \nMost of these models are based upon one or some combination of the following development \nmodels:[1-5]\n• The big-bang model, in which there is essentially no planning or processes in place \nbefore and during the development of a system.\n• The code-and-ﬁx model, in which product requirements are deﬁned but no formal \nprocesses are in place before the start of development.\n• The waterfall model, in which there is a process for developing a system in steps, \nwhere results of one step ﬂow into the next step. \n• The spiral model, in which there is a process for developing a system in steps, and \nthroughout the various steps, feedback is obtained and incorporated bac"
+        },
+        {
+          "rank": 8,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 7",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 7",
+          "page": 7,
+          "line": null,
+          "score": "sample",
+          "snippet": "Chapter 1\n8\nFigure 1-1: Embedded Systems Design and Development Lifecycle Model [1-2]\nmaintaining the system. Most of this book is dedicated to discussing phase 1, and the rest of \nthis chapter is dedicated to discussing why so much of this book has been devoted to creating \nan embedded system’s architecture.\nWithin this text, phase 1 is deﬁned as being made up of six stages: having a strong techni-\ncal foundation (stage 1), understanding the Architectural Business Cycle (stage 2), deﬁning \nthe architectural patterns and models (stage 3), deﬁning the architectural structures (stage 4), \ndocumenting the architecture (stage 5), and analyzing and reviewing the architecture (stage \n6)[1-3]. Chapters 2–10 focus on providing a strong technical foundation for understanding the \nmajor components of an embedded system design. Chapter 11 discusses the remaining stages \nof phase 1, and Chapter 12 introduces the last three phases.\n Product \nConcept \nPreliminary  Analysis \nof  Requirements  \nCreation of \nArchitecture Design \nDevelop Version of \nArchitecture \nDeliver Version of \nArchitecture \nReview and Obtain \nFeedback  \nIncorporate \nFeedback \nDeliver Final Version \nof Architecture \nDevelop [Im"
+        },
+        {
+          "rank": 9,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 8",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 8",
+          "page": 8,
+          "line": null,
+          "score": "sample",
+          "snippet": "A Systems Engineering Approach to Embedded Systems Design\n9\n1.3  An Introduction to Embedded Systems Architecture\nThe architecture of an embedded system is an abstraction of the embedded device, meaning \nthat it is a generalization of the system that typically doesn’t show detailed implementation \ninformation such as software source code or hardware circuit design. At the architectural \nlevel, the hardware and software components in an embedded system are instead represented \nas some composition of interacting elements. Elements are representations of hardware and/or \nsoftware whose implementation details have been abstracted out, leaving only behavioral \nand inter-relationship information. Architectural elements can be internally integrated within \nthe embedded device, or exist externally to the embedded system and interact with internal \nelements. In short, an embedded architecture includes elements of the embedded system, ele-\nments interacting with an embedded system, the properties of each of the individual elements, \nand the interactive relationships between the elements.  \nArchitecture-level information is physically represented in the form of structures. A structure \nis one"
+        },
+        {
+          "rank": 10,
+          "title": "file_14b079d17ceb_9780750677929.pdf | الصفحة 9",
+          "source": "C:\\Masters\\Gen-AI\\Project\\studywithme-arabic-ai\\data\\raw_docs\\chat_b733493b5420\\file_14b079d17ceb_9780750677929.pdf",
+          "source_name": "file_14b079d17ceb_9780750677929.pdf",
+          "location": "الصفحة 9",
+          "page": 9,
+          "line": null,
+          "score": "sample",
+          "snippet": "Chapter 1\n10\nTable 1-2: Examples of architectural structures [1-4]\nStructure Types* Deﬁnition\nModule Elements (referred to as modules) are deﬁned as the different functional components \n(the essential hardware and/or software that the system needs to function correctly) \nwithin an embedded device. Marketing and sales architectural diagrams are typically \nrepresented as modular structures, since software or hardware is typically packaged for \nsale as modules (i.e., an operating system, a processor, a JVM, and so on). \nUses (also referred to as \nsubsystem and component)\nA type of modular structure representing system at runtime in which modules are \ninter-related by their usages (what module uses what other module, for example).\nLayers A type of Uses structure in which modules are organized in layers (i.e., hierarchical) in \nwhich modules in higher layers use (require) modules of lower layers.\nKernel Structure presents modules that use modules (services) of an operating system kernel \nor are manipulated by the kernel.\nChannel  \nArchitecture\nStructure presents modules sequentially, showing the module transformations through \ntheir usages.\nVirtual  \nMachine\nStructure presents modules t"
+        }
+      ],
+      "tools_used": [
+        "document_search"
+      ],
+      "component_steps": [
+        {
+          "name": "Planner",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "summary | tasks=1 | openai:gpt-4o-mini",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:22+00:00",
+          "end_time": "2026-05-31T06:53:22+00:00",
+          "duration_ms": 1,
+          "error": null
+        },
+        {
+          "name": "Document Search",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "docs=8",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:31+00:00",
+          "end_time": "2026-05-31T06:53:31+00:00",
+          "duration_ms": 9316,
+          "error": null
+        },
+        {
+          "name": "Build Prompt",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "Summary",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:31+00:00",
+          "end_time": "2026-05-31T06:53:31+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Tutor Answer",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوع الأنظمة المدمجة، وهو مجال واسع ومتعدد الجوانب في عالم التكنولوجيا. الأنظمة المدمجة هي أنظمة حاسوبية مخصصة لأداء مهام محددة، وتختلف عن الحواسيب الشخصية أو الفائقة في طبيعت",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:44+00:00",
+          "end_time": "2026-05-31T06:53:44+00:00",
+          "duration_ms": 12246,
+          "error": null
+        },
+        {
+          "name": "Arabic Guard",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوع الأنظمة المدمجة، وهو مجال واسع ومتعدد الجوانب في عالم التكنولوجيا. الأنظمة المدمجة هي أنظمة حاسوبية مخصصة لأداء مهام محددة، وتختلف عن الحواسيب الشخصية أو الفائقة في طبيعت",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:44+00:00",
+          "end_time": "2026-05-31T06:53:44+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Citation Checker",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "{'name': 'citation_checker', 'passed': False, 'sources_exist': True, 'message': 'توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.'}",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:44+00:00",
+          "end_time": "2026-05-31T06:53:44+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Evaluation",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "{'evaluation_id': 'eval_313cd863e2e7', 'status': 'completed', 'overall_score': 7.6, 'rubric': {'Answer follows requested language': 3, 'Uses retrieved context': 9, 'Does not hallucinate unsupported claims': 8, 'Clear structure': 9, 'Correct",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:44+00:00",
+          "end_time": "2026-05-31T06:53:44+00:00",
+          "duration_ms": 5,
+          "error": null
+        },
+        {
+          "name": "Save Trace",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "trace ready",
+          "status": "ok",
+          "start_time": "2026-05-31T06:53:44+00:00",
+          "end_time": "2026-05-31T06:53:44+00:00",
+          "duration_ms": 0,
+          "error": null
+        }
+      ],
+      "timings_ms": {
+        "planner_ms": 1,
+        "document_search_ms": 9316,
+        "build_prompt_ms": 0,
+        "tutor_answer_ms": 12246,
+        "arabic_guard_ms": 0,
+        "citation_checker_ms": 0,
+        "evaluation_ms": 5,
+        "save_trace_ms": 0,
+        "total_response_ms": 21787
+      },
+      "final_answer": "# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوع الأنظمة المدمجة، وهو مجال واسع ومتعدد الجوانب في عالم التكنولوجيا. الأنظمة المدمجة هي أنظمة حاسوبية مخصصة لأداء مهام محددة، وتختلف عن الحواسيب الشخصية أو الفائقة في طبيعتها ووظيفتها. يتضمن الملف نماذج وأساليب تصميم الأنظمة المدمجة، ويستعرض المعايير الشائعة المستخدمة في بناء هذه الأنظمة. تكمن أهمية هذا الموضوع في دوره الحيوي في تطوير الأجهزة الإلكترونية الحديثة، حيث تتطلب العديد من التطبيقات، مثل الأجهزة الطبية والسيارات، أنظمة مدمجة ذات موثوقية وجودة عالية.\n\n## 2. خريطة المحتوى\n1. **مقدمة في الأنظمة المدمجة**\n   - **الفكرة:** تعريف الأنظمة المدمجة وأهميتها.\n   - **لماذا يحتاج الطالب إلى فهمها:** لفهم الأساسيات التي تقوم عليها الأنظمة المدمجة.\n\n2. **تصميم الأنظمة المدمجة**\n   - **الفكرة:** نماذج وأساليب تصميم الأنظمة.\n   - **لماذا يحتاج الطالب إلى فهمها:** لتطبيق الأساليب الصحيحة في تطوير الأنظمة المدمجة.\n\n3. **معمارية الأنظمة المدمجة**\n   - **الفكرة:** فهم مكونات الأنظمة المدمجة وكيفية تفاعلها.\n   - **لماذا يحتاج الطالب إلى فهمها:** لتصميم أنظمة فعالة وقابلة للتطوير.\n\n## 3. الشرح التفصيلي\nيبدأ الملف بتعريف الأنظمة المدمجة، موضحًا أنها أنظمة حاسوبية متخصصة تختلف عن الأنظمة التقليدية. يتناول الفصل الأول نماذج تصميم الأنظمة المدمجة، مثل نموذج \"الشلال\" و\"الدوامة\"، حيث يوضح كيفية تطوير النظام من خلال مراحل محددة. كما يناقش أهمية الجودة والموثوقية في تصميم الأنظمة، خاصة في التطبيقات الحساسة مثل الأجهزة الطبية.\n\nفي الفصل الثاني، يتم تقديم معمارية الأنظمة المدمجة، حيث يتم تمثيل المكونات كعناصر تتفاعل مع بعضها البعض. يتناول الملف كيفية تنظيم هذه العناصر في هياكل مختلفة، مثل الهياكل الطبقية أو الوحدات، مما يسهل فهم كيفية عمل النظام ككل.\n\n## 4. المفاهيم والمصطلحات المهمة\n\n| المصطلح                | معناه                                                      | دوره داخل الملف                                           |\n|-----------------------|-----------------------------------------------------------|----------------------------------------------------------|\n| الأنظمة المدمجة       | أنظمة حاسوبية مخصصة لأداء مهام معينة                     | أساس الموضوع الذي يدور حوله الملف                       |\n| تصميم الأنظمة         | عملية تطوير الأنظمة المدمجة باستخدام نماذج محددة         | يشرح كيفية بناء الأنظمة بشكل فعال                        |\n| معمارية الأنظمة       | تمثيل مكونات النظام وكيفية تفاعلها                       | يساعد في فهم كيفية تنظيم الأنظمة المدمجة                |\n| نموذج الشلال          | نموذج تصميم يعتمد على مراحل متتابعة                     | يوضح خطوات تطوير النظام                                  |\n| نموذج الدوامة         | نموذج تصميم يتضمن التغذية الراجعة خلال مراحل التطوير    | يساهم في تحسين النظام بناءً على الملاحظات               |\n\n## 5. مثال تطبيقي كامل\nتخيل أنك تعمل على تطوير جهاز طبي لمراقبة نبضات القلب. تبدأ المشكلة بأن الجهاز الحالي يعاني من عدم دقة في القياسات. هنا، تستخدم طريقة التفكير الهندسية لتحديد متطلبات الجهاز. تبدأ بخطوات الحل من خلال تحليل المتطلبات، ثم تصميم معمارية الجهاز باستخدام نموذج الشلال. بعد ذلك، تقوم بتطوير النسخة الأولية للجهاز، وتختبره للحصول على ملاحظات. بعد دمج الملاحظات، تصل إلى النسخة النهائية التي توفر دقة عالية في القياسات، مما يحسن من موثوقية الجهاز في التطبيقات الطبية.\n\n## 6. ماذا تذاكر أولا\n1. تعريف الأنظمة المدمجة.\n2. نماذج تصميم الأنظمة.\n3. معمارية الأنظمة المدمجة.\n4. أهمية الجودة والموثوقية.\n5. كيفية تنظيم المكونات في هياكل مختلفة.\n6. استخدام نماذج مثل الشلال والدوامة.\n7. تطبيقات عملية للأنظمة المدمجة.\n8. معايير تصميم الأنظمة.\n\n## 7. الدليل من الملف\n- الصفحة 2: مقدمة حول الأنظمة المدمجة.\n- الصفحة 4: تعريف الأنظمة المدمجة وأهميتها.\n- الصفحة 6: نماذج تصميم الأنظمة.\n- الصفحة 8: معمارية الأنظمة المدمجة.\n\n## 8. خلاصة سريعة\nالملف يقدم نظرة شاملة على الأنظمة المدمجة، بدءًا من تعريفها ووصولًا إلى تصميمها ومعماريتها. يتناول أهمية الجودة والموثوقية في التطبيقات المختلفة، ويستعرض نماذج التصميم الأساسية التي يجب على الطلاب فهمها لتطوير أنظمة مدمجة فعالة.\n\n---\n\n# المراجع المستخدمة\n## ملفات\n- مرجع 1: file_14b079d17ceb_9780750677929.pdf، الصفحة 0\n- مرجع 3: file_14b079d17ceb_9780750677929.pdf، الصفحة 2\n- مرجع 5: file_14b079d17ceb_9780750677929.pdf، الصفحة 4\n- مرجع 6: file_14b079d17ceb_9780750677929.pdf، الصفحة 5\n- مرجع 7: file_14b079d17ceb_9780750677929.pdf، الصفحة 6\n- مرجع 8: file_14b079d17ceb_9780750677929.pdf، الصفحة 7\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "evaluation_result": {
+        "evaluation_id": "eval_313cd863e2e7",
+        "status": "completed",
+        "overall_score": 7.6,
+        "rubric": {
+          "Answer follows requested language": 3,
+          "Uses retrieved context": 9,
+          "Does not hallucinate unsupported claims": 8,
+          "Clear structure": 9,
+          "Correct technical explanation": 7,
+          "Cites sources": 9,
+          "Completeness": 8,
+          "Conciseness according to request": 8,
+          "Educational usefulness": 6,
+          "Formatting quality": 9
+        },
+        "deterministic_checks": [
+          {
+            "name": "arabic_language",
+            "passed": false,
+            "expected": "Arabic answer with only necessary English technical terms",
+            "actual": {
+              "arabic_ratio": 0.97,
+              "disallowed_language": true,
+              "word_count": 604,
+              "disallowed_latin_words": [
+                "file_14b079d17ceb_9780750677929.pdf"
+              ],
+              "disallowed_latin_occurrences": [
+                {
+                  "word": "file_14b079d17ceb_9780750677929.pdf",
+                  "position": 3884,
+                  "context": "مراجع المستخدمة ## ملفات - مرجع 1: file_14b079d17ceb_9780750677929.pdf، الصفحة 0 - مرجع 3: file_14b079d17"
+                }
+              ],
+              "disallowed_script_samples": []
+            }
+          },
+          {
+            "name": "required_learning_structure",
+            "passed": true,
+            "expected": [
+              "الفكرة",
+              "الشرح",
+              "مثال",
+              "الدليل",
+              "خلاصة"
+            ],
+            "actual": [
+              "الفكرة",
+              "الشرح",
+              "مثال",
+              "الدليل",
+              "خلاصة"
+            ]
+          },
+          {
+            "name": "source_grounding",
+            "passed": true,
+            "expected": [
+              "file sources"
+            ],
+            "actual": {
+              "has_source_section": true,
+              "mentions_files": true,
+              "mentions_web": false,
+              "mentions_model": false
+            }
+          }
+        ],
+        "llm_judge": null,
+        "gold_standard": null,
+        "rubric_reasons": {
+          "Answer follows requested language": "نسبة الحروف العربية: 0.97. عدد الكلمات: 604. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: file_14b079d17ceb_9780750677929.pdf. أمثلة من النص: `file_14b079d17ceb_9780750677929.pdf` في: \"مراجع المستخدمة ## ملفات - مرجع 1: file_14b079d17ceb_9780750677929.pdf، الصفحة 0 - مرجع 3: file_14b079d17\".",
+          "Uses retrieved context": "Passed source grounding with retrieved documents.",
+          "Does not hallucinate unsupported claims": "Source grounding passed.",
+          "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة'].",
+          "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+          "Cites sources": "Answer has a recognizable source section.",
+          "Completeness": "Answer length is 4288 characters.",
+          "Conciseness according to request": "Answer length is 4288 characters; requested line/word/quiz checks may lower this.",
+          "Educational usefulness": "Looks for an example and a study summary in the answer.",
+          "Formatting quality": "Markdown heading count: 20."
+        },
+        "recommendations": [
+          "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: file_14b079d17ceb_9780750677929.pdf."
+        ],
+        "created_at": "2026-05-31T06:53:44+00:00"
+      },
+      "created_at": "2026-05-31T06:53:22+00:00",
+      "route": [
+        "LangGraph",
+        "summary"
+      ],
+      "web_sources": [],
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "profile": "openai_gpt_4o_mini"
+      },
+      "planner": {
+        "route": "summary",
+        "tasks": [
+          {
+            "type": "summary",
+            "title": "الملخص"
+          }
+        ],
+        "needs_documents": true,
+        "needs_web": false,
+        "answer_style": "study_report"
+      },
+      "citation_check": {
+        "name": "citation_checker",
+        "passed": false,
+        "sources_exist": true,
+        "message": "توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح."
+      },
+      "graph_state_summary": {
+        "route": "summary",
+        "next_action": null,
+        "docs": 8,
+        "web_sources": 0,
+        "tools_used": [
+          "document_search"
+        ],
+        "has_quiz": false,
+        "has_quiz_result": false,
+        "tasks": [
+          {
+            "type": "summary",
+            "title": "الملخص"
+          }
+        ],
+        "task_results": [],
+        "final_sections": 0,
+        "is_multi_task": false
+      }
+    },
+    {
+      "prompt_id": "prompt_1574412e82fe",
+      "chat_id": "b733493b5420",
+      "user_query": "اشرحلي الفايل",
+      "selected_agent": "Summary",
+      "retrieved_docs": [],
+      "tools_used": [
+        "web_search"
+      ],
+      "component_steps": [
+        {
+          "name": "Planner",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "multi_task | tasks=2 | openai:gpt-4o-mini",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:19+00:00",
+          "end_time": "2026-05-31T06:59:19+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Task Dispatcher",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "1/2 web_search",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:19+00:00",
+          "end_time": "2026-05-31T06:59:19+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Web Search",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "results=5",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:19+00:00",
+          "end_time": "2026-05-31T06:59:19+00:00",
+          "duration_ms": 613,
+          "error": null
+        },
+        {
+          "name": "Collect Task Output",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "web_search saved",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:19+00:00",
+          "end_time": "2026-05-31T06:59:19+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Task Dispatcher",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "2/2 summary",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:19+00:00",
+          "end_time": "2026-05-31T06:59:19+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Build Prompt",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "Summary",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:20+00:00",
+          "end_time": "2026-05-31T06:59:20+00:00",
+          "duration_ms": 300,
+          "error": null
+        },
+        {
+          "name": "Tutor Answer",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوعات متعددة تتعلق بالتعليم والتكنولوجيا، مع التركيز على كيفية استخدام أدوات الذكاء الاصطناعي في التعليم. يعتبر هذا الموضوع مهمًا لأنه يعكس الاتجاهات الحديثة في التعليم وكيف ",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 8758,
+          "error": null
+        },
+        {
+          "name": "Collect Task Output",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "summary saved",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Task Dispatcher",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "all tasks complete",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Final Composer",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "sections=2",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Arabic Guard",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "# بحث الويب\nتم جلب مصادر الويب التالية:\n- اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA\n- [اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Citation Checker",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "{'name': 'citation_checker', 'passed': False, 'sources_exist': True, 'message': 'توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.'}",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 0,
+          "error": null
+        },
+        {
+          "name": "Evaluation",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "{'evaluation_id': 'eval_80578db0c621', 'status': 'completed', 'overall_score': 7.7, 'rubric': {'Answer follows requested language': 3, 'Uses retrieved context': 7, 'Does not hallucinate unsupported claims': 8, 'Clear structure': 9, 'Correct",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 27,
+          "error": null
+        },
+        {
+          "name": "Save Trace",
+          "input_summary": "اشرحلي الفايل",
+          "output_summary": "trace ready",
+          "status": "ok",
+          "start_time": "2026-05-31T06:59:29+00:00",
+          "end_time": "2026-05-31T06:59:29+00:00",
+          "duration_ms": 0,
+          "error": null
+        }
+      ],
+      "timings_ms": {
+        "planner_ms": 0,
+        "task_dispatcher_ms": 0,
+        "web_search_ms": 613,
+        "collect_task_output_ms": 0,
+        "build_prompt_ms": 300,
+        "tutor_answer_ms": 8758,
+        "final_composer_ms": 0,
+        "arabic_guard_ms": 0,
+        "citation_checker_ms": 0,
+        "evaluation_ms": 27,
+        "save_trace_ms": 0,
+        "total_response_ms": 9886
+      },
+      "final_answer": "# بحث الويب\nتم جلب مصادر الويب التالية:\n- اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA\n- [اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar\n- إشرحلي — المعلم الذكي | https://www.ashrhly.com\n- شرح ملف PDF - مجاني 100% وعبر الإنترنت | https://tools.pdf24.org/ar/annotate-pdf\n- A step-by-step guide to using the PDF Reader app | https://www.youtube.com/watch?v=QjYMFY6zyLo\n\n# الملخص\n# تقرير مذاكرة عن الملف\n\n## 1. نظرة عامة على الملف\nيتناول الملف موضوعات متعددة تتعلق بالتعليم والتكنولوجيا، مع التركيز على كيفية استخدام أدوات الذكاء الاصطناعي في التعليم. يعتبر هذا الموضوع مهمًا لأنه يعكس الاتجاهات الحديثة في التعليم وكيف يمكن للتكنولوجيا أن تسهم في تحسين تجربة التعلم. يطرح الملف أيضًا مشكلات تتعلق بالتحصيل الدراسي وكيفية استخدام أدوات مثل الذكاء الاصطناعي لمساعدة الطلاب على فهم المواد الدراسية بشكل أفضل.\n\n## 2. خريطة المحتوى\n- **أهمية علوم البيانات والذكاء الاصطناعي**: يتناول هذا المحور كيف يمكن لعلوم البيانات والذكاء الاصطناعي أن تعزز من التعلم. يحتاج الطالب لفهم هذا المحور لأنه يوضح كيف يمكن استخدام هذه الأدوات لتحسين الأداء الأكاديمي.\n  \n- **نظام ملفات لينكس**: يشرح هذا المحور كيفية عمل نظام ملفات لينكس وأهميته. يحتاج الطالب لفهم هذا النظام لأنه يعد جزءًا أساسيًا من علوم الحاسوب.\n\n- **أدوات التعلم الذكي**: يتحدث عن أدوات مثل \"المعلم الذكي\" وكيف يمكن أن تساعد الطلاب في التعلم. يحتاج الطالب لفهم هذه الأدوات لتسهيل عملية التعلم.\n\n## 3. الشرح التفصيلي\nفي البداية، يجب على الطلاب فهم أهمية علوم البيانات والذكاء الاصطناعي، حيث يمكن لهذه العلوم أن توفر رؤى قيمة تساعد في تحسين الأداء الأكاديمي. يمكن للطلاب استخدام هذه الأدوات لتحليل بياناتهم الدراسية وفهم نقاط القوة والضعف لديهم.\n\nبعد ذلك، يأتي الحديث عن نظام ملفات لينكس. يجب على الطلاب التعرف على كيفية تنظيم البيانات في هذا النظام، حيث يعد فهم كيفية عمل أنظمة التشغيل أمرًا ضروريًا في مجال الحاسوب.\n\nثم ننتقل إلى أدوات التعلم الذكي، مثل \"المعلم الذكي\". هذه الأدوات تستخدم الذكاء الاصطناعي لتقديم محتوى تعليمي مخصص للطلاب، مما يساعدهم على التعلم بشكل أكثر فعالية.\n\n## 4. المفاهيم والمصطلحات المهمة\n\n| المصطلح                | معناه                                               | دوره داخل الملف                          |\n|-----------------------|----------------------------------------------------|------------------------------------------|\n| علوم البيانات         | مجال يركز على تحليل البيانات واستخراج المعلومات  | يوضح كيف يمكن استخدام البيانات لتحسين التعلم |\n| الذكاء الاصطناعي     | تقنية تحاكي الذكاء البشري في معالجة المعلومات    | تعزز من أدوات التعلم وتساعد الطلاب      |\n| نظام ملفات لينكس     | طريقة لتنظيم البيانات في نظام التشغيل لينكس      | أساسي لفهم كيفية عمل أنظمة التشغيل      |\n| المعلم الذكي          | أداة تستخدم الذكاء الاصطناعي لتعليم الطلاب       | تسهل عملية التعلم وتقدم محتوى مخصص     |\n\n## 5. مثال تطبيقي كامل\nتخيل طالبًا يُدعى أحمد، يواجه صعوبة في فهم مادة الرياضيات. قرر أحمد استخدام \"المعلم الذكي\" لمساعدته. بدأ بتحديد المشكلة، وهي عدم فهمه لمفهوم معين في الجبر. استخدم أحمد الأداة لتحديد نقاط ضعفه، حيث قدمت له تمارين مخصصة. بعد عدة محاولات، بدأ أحمد في فهم المفهوم بشكل أفضل. في النهاية، تمكن من تحسين درجاته في المادة بفضل استخدام التكنولوجيا.\n\n## 6. ماذا تذاكر أولا\n1. أهمية علوم البيانات والذكاء الاصطناعي.\n2. نظام ملفات لينكس.\n3. أدوات التعلم الذكي.\n4. كيفية استخدام \"المعلم الذكي\".\n5. تطبيقات الذكاء الاصطناعي في التعليم.\n6. تحليل البيانات لتحسين الأداء الأكاديمي.\n7. استراتيجيات التعلم الفعالة.\n8. كيفية تنظيم المعلومات في أنظمة التشغيل.\n\n## 7. الدليل من الملف\n- تم الاستناد إلى أهمية علوم البيانات والذكاء الاصطناعي من [ويب 1].\n- تم استخدام نظام ملفات لينكس من [ويب 2].\n- تم التطرق إلى أدوات التعلم الذكي من [ويب 3].\n\n## 8. خلاصة سريعة\nيتناول الملف أهمية استخدام التكنولوجيا في التعليم، مع التركيز على علوم البيانات والذكاء الاصطناعي. كما يشرح كيفية عمل نظام ملفات لينكس وأدوات التعلم الذكي. من الضروري للطلاب فهم هذه المفاهيم لتحسين أدائهم الأكاديمي والاستفادة من التكنولوجيا بشكل فعال.\n\n---\n\n# المراجع المستخدمة\n## ويب\n- مرجع ويب 1: اشرح لي، https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA\n- مرجع ويب 2: [اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs، https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar\n- مرجع ويب 3: إشرحلي — المعلم الذكي، https://www.ashrhly.com\n- مرجع ويب 4: شرح ملف PDF - مجاني 100% وعبر الإنترنت، https://tools.pdf24.org/ar/annotate-pdf\n- مرجع ويب 5: A step-by-step guide to using the PDF Reader app، https://www.youtube.com/watch?v=QjYMFY6zyLo\n\n> تنبيه المصادر: توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح.",
+      "evaluation_result": {
+        "evaluation_id": "eval_80578db0c621",
+        "status": "completed",
+        "overall_score": 7.7,
+        "rubric": {
+          "Answer follows requested language": 3,
+          "Uses retrieved context": 7,
+          "Does not hallucinate unsupported claims": 8,
+          "Clear structure": 9,
+          "Correct technical explanation": 7,
+          "Cites sources": 9,
+          "Completeness": 8,
+          "Conciseness according to request": 8,
+          "Educational usefulness": 9,
+          "Formatting quality": 9
+        },
+        "deterministic_checks": [
+          {
+            "name": "arabic_language",
+            "passed": false,
+            "expected": "Arabic answer with only necessary English technical terms",
+            "actual": {
+              "arabic_ratio": 0.85,
+              "disallowed_language": true,
+              "word_count": 670,
+              "disallowed_latin_words": [
+                "https",
+                "www.youtube.com",
+                "channel",
+                "UCf7sMN0PCcBJnoa2oa73mQA",
+                "r",
+                "www.reddit.com",
+                "comments",
+                "eli5_the_linux_file_system",
+                "tl",
+                "ar",
+                "www.ashrhly.com",
+                "annotate-pdf"
+              ],
+              "disallowed_latin_occurrences": [
+                {
+                  "word": "https",
+                  "position": 52,
+                  "context": "ب مصادر الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0"
+                },
+                {
+                  "word": "www.youtube.com",
+                  "position": 60,
+                  "context": "الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA -"
+                },
+                {
+                  "word": "channel",
+                  "position": 76,
+                  "context": "اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي"
+                },
+                {
+                  "word": "UCf7sMN0PCcBJnoa2oa73mQA",
+                  "position": 84,
+                  "context": "| https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي كأني عندي 5 سنين] نظام م"
+                },
+                {
+                  "word": "r",
+                  "position": 156,
+                  "context": "ني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.c"
+                },
+                {
+                  "word": "www.reddit.com",
+                  "position": 180,
+                  "context": "ات لينكس : r/linux4noobs | https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli"
+                },
+                {
+                  "word": "comments",
+                  "position": 209,
+                  "context": "tps://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system"
+                },
+                {
+                  "word": "eli5_the_linux_file_system",
+                  "position": 226,
+                  "context": "com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar - إشرحلي — المعلم الذكي | ht"
+                },
+                {
+                  "word": "tl",
+                  "position": 253,
+                  "context": "1k3kp00/eli5_the_linux_file_system?tl=ar - إشرحلي — المعلم الذكي | https"
+                },
+                {
+                  "word": "ar",
+                  "position": 256,
+                  "context": "kp00/eli5_the_linux_file_system?tl=ar - إشرحلي — المعلم الذكي | https://"
+                },
+                {
+                  "word": "www.ashrhly.com",
+                  "position": 293,
+                  "context": "- إشرحلي — المعلم الذكي | https://www.ashrhly.com - شرح ملف PDF - مجاني 100% وعبر ال"
+                },
+                {
+                  "word": "annotate-pdf",
+                  "position": 379,
+                  "context": "نترنت | https://tools.pdf24.org/ar/annotate-pdf - A step-by-step guide to using th"
+                }
+              ],
+              "disallowed_script_samples": []
+            }
+          },
+          {
+            "name": "required_learning_structure",
+            "passed": true,
+            "expected": [
+              "الفكرة",
+              "الشرح",
+              "مثال",
+              "الدليل",
+              "خلاصة"
+            ],
+            "actual": [
+              "الشرح",
+              "مثال",
+              "الدليل",
+              "خلاصة"
+            ]
+          },
+          {
+            "name": "source_grounding",
+            "passed": true,
+            "expected": [
+              "web sources"
+            ],
+            "actual": {
+              "has_source_section": true,
+              "mentions_files": true,
+              "mentions_web": true,
+              "mentions_model": false
+            }
+          }
+        ],
+        "llm_judge": null,
+        "gold_standard": null,
+        "rubric_reasons": {
+          "Answer follows requested language": "نسبة الحروف العربية: 0.85. عدد الكلمات: 670. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: https, www.youtube.com, channel, UCf7sMN0PCcBJnoa2oa73mQA, r, www.reddit.com, comments, eli5_the_linux_file_system, tl, ar, www.ashrhly.com, annotate-pdf. أمثلة من النص: `https` في: \"ب مصادر الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0\" | `www.youtube.com` في: \"الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA -\" | `channel` في: \"اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي\" | `UCf7sMN0PCcBJnoa2oa73mQA` في: \"| https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي كأني عندي 5 سنين] نظام م\" | `r` في: \"ني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.c\".",
+          "Uses retrieved context": "No file context was available or the answer did not clearly connect claims to retrieved sources.",
+          "Does not hallucinate unsupported claims": "Source grounding passed.",
+          "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: ['الشرح', 'مثال', 'الدليل', 'خلاصة'].",
+          "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+          "Cites sources": "Answer has a recognizable source section.",
+          "Completeness": "Answer length is 4535 characters.",
+          "Conciseness according to request": "Answer length is 4535 characters; requested line/word/quiz checks may lower this.",
+          "Educational usefulness": "Looks for an example and a study summary in the answer.",
+          "Formatting quality": "Markdown heading count: 22."
+        },
+        "recommendations": [
+          "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: https, www.youtube.com, channel, UCf7sMN0PCcBJnoa2oa73mQA, r, www.reddit.com, comments, eli5_the_linux_file_system, tl, ar, www.ashrhly.com, annotate-pdf."
+        ],
+        "created_at": "2026-05-31T06:59:29+00:00"
+      },
+      "created_at": "2026-05-31T06:59:19+00:00",
+      "route": [
+        "LangGraph",
+        "multi_task"
+      ],
+      "web_sources": [
+        {
+          "title": "اشرح لي",
+          "url": "https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA",
+          "snippet": "اشرح لي. @اشرحلي-ص4ب. 3.27K subscribers•146 videos. قناتي اتشرف بإنضمامكم ... كيف اكمل ملفي في جدارات. 457 views · حل دورة أهمية علوم البيانات والذكاء",
+          "provider": "tavily"
+        },
+        {
+          "title": "[اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs",
+          "url": "https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar",
+          "snippet": "[اشرحلي كأني عندي 5 سنين] نظام ملفات لينكس. يا عشاق البطريق الأعزاء، بحاول أفهم نظام ملفات لينكس بس عقلي السطحي لسه فيه شوية لخبطة. أنا فاهم",
+          "provider": "tavily"
+        },
+        {
+          "title": "إشرحلي — المعلم الذكي",
+          "url": "https://www.ashrhly.com",
+          "snippet": "نتائج أفضل لابنك في ٣٠ يوم. معلم ذكي بالذكاء الاصطناعي يشرح لابنك بلهجته، يتبع منهجه الدراسي، ويتابع تقدمه — أونلاين ٢٤/٧. ابدأ مجاناً شاهد كيف يعمل.",
+          "provider": "tavily"
+        },
+        {
+          "title": "شرح ملف PDF - مجاني 100% وعبر الإنترنت",
+          "url": "https://tools.pdf24.org/ar/annotate-pdf",
+          "snippet": "أداة مجانية على الإنترنت للتعليقات التوضيحية ملفات PDF. ✓ بدون حدود وبدون علامات مائية. ✓ بدون تثبيت أو تسجيل.",
+          "provider": "tavily"
+        },
+        {
+          "title": "A step-by-step guide to using the PDF Reader app",
+          "url": "https://www.youtube.com/watch?v=QjYMFY6zyLo",
+          "snippet": "We'll learn how to open and read PDF files, add comments and signatures, and organize your files within the app. The app is easy to use and",
+          "provider": "tavily"
+        }
+      ],
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "profile": "openai_gpt_4o_mini"
+      },
+      "planner": {
+        "route": "multi_task",
+        "tasks": [
+          {
+            "type": "web_search",
+            "title": "بحث الويب"
+          },
+          {
+            "type": "summary",
+            "title": "الملخص"
+          }
+        ],
+        "needs_documents": false,
+        "needs_web": true,
+        "answer_style": "study_report"
+      },
+      "arabic_guard_warning": "LLM repair is disabled. The answer may contain non-Arabic words beyond the allowed technical terms.",
+      "citation_check": {
+        "name": "citation_checker",
+        "passed": false,
+        "sources_exist": true,
+        "message": "توجد مصادر مستخدمة، لكن الإجابة لا تحتوي على قسم مصادر واضح."
+      },
+      "graph_state_summary": {
+        "route": "multi_task",
+        "next_action": "final",
+        "docs": 0,
+        "web_sources": 5,
+        "tools_used": [
+          "web_search"
+        ],
+        "has_quiz": false,
+        "has_quiz_result": false,
+        "tasks": [
+          {
+            "type": "web_search",
+            "title": "بحث الويب"
+          },
+          {
+            "type": "summary",
+            "title": "الملخص"
+          }
+        ],
+        "task_results": [
+          {
+            "index": 0,
+            "type": "web_search",
+            "title": "بحث الويب",
+            "status": "ok",
+            "docs": 0,
+            "web_sources": 5,
+            "tools_used": [
+              "web_search"
+            ]
+          },
+          {
+            "index": 1,
+            "type": "summary",
+            "title": "الملخص",
+            "status": "ok",
+            "docs": 0,
+            "web_sources": 5,
+            "tools_used": [
+              "web_search"
+            ]
+          }
+        ],
+        "final_sections": 2,
+        "is_multi_task": true
+      }
+    }
+  ],
+  "evaluations": [
+    {
+      "evaluation_id": "eval_fc43264b873c",
+      "status": "completed",
+      "overall_score": 5.1,
+      "rubric": {
+        "Answer follows requested language": 3,
+        "Uses retrieved context": 5,
+        "Does not hallucinate unsupported claims": 5,
+        "Clear structure": 4,
+        "Correct technical explanation": 7,
+        "Cites sources": 3,
+        "Completeness": 5,
+        "Conciseness according to request": 8,
+        "Educational usefulness": 6,
+        "Formatting quality": 5
+      },
+      "deterministic_checks": [
+        {
+          "name": "arabic_language",
+          "passed": false,
+          "expected": "Arabic answer with only necessary English technical terms",
+          "actual": {
+            "arabic_ratio": 0.83,
+            "disallowed_language": true,
+            "word_count": 58,
+            "disallowed_latin_words": [
+              "Documents",
+              "only.",
+              "Source",
+              "mode",
+              "Web"
+            ],
+            "disallowed_latin_occurrences": [
+              {
+                "word": "Documents",
+                "position": 111,
+                "context": "والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl"
+              },
+              {
+                "word": "only.",
+                "position": 121,
+                "context": "الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D"
+              },
+              {
+                "word": "Source",
+                "position": 132,
+                "context": "مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W"
+              },
+              {
+                "word": "mode",
+                "position": 139,
+                "context": "في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ"
+              },
+              {
+                "word": "Web",
+                "position": 148,
+                "context": "cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال"
+              }
+            ],
+            "disallowed_script_samples": []
+          }
+        },
+        {
+          "name": "required_learning_structure",
+          "passed": false,
+          "expected": [
+            "الفكرة",
+            "الشرح",
+            "مثال",
+            "الدليل",
+            "خلاصة"
+          ],
+          "actual": []
+        },
+        {
+          "name": "source_grounding",
+          "passed": false,
+          "expected": [
+            "file sources"
+          ],
+          "actual": {
+            "has_source_section": false,
+            "mentions_files": true,
+            "mentions_web": true,
+            "mentions_model": false
+          }
+        }
+      ],
+      "llm_judge": null,
+      "gold_standard": null,
+      "rubric_reasons": {
+        "Answer follows requested language": "نسبة الحروف العربية: 0.83. عدد الكلمات: 58. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: Documents, only., Source, mode, Web. أمثلة من النص: `Documents` في: \"والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl\" | `only.` في: \"الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D\" | `Source` في: \"مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W\" | `mode` في: \"في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ\" | `Web` في: \"cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال\".",
+        "Uses retrieved context": "No file context was available or the answer did not clearly connect claims to retrieved sources.",
+        "Does not hallucinate unsupported claims": "Source grounding failed, so unsupported claims are possible.",
+        "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: [].",
+        "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+        "Cites sources": "Source check details: {'has_source_section': False, 'mentions_files': True, 'mentions_web': True, 'mentions_model': False}",
+        "Completeness": "Answer length is 317 characters.",
+        "Conciseness according to request": "Answer length is 317 characters; requested line/word/quiz checks may lower this.",
+        "Educational usefulness": "Looks for an example and a study summary in the answer.",
+        "Formatting quality": "Markdown heading count: 2."
+      },
+      "recommendations": [
+        "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: Documents, only., Source, mode, Web.",
+        "أضف بنية تعليمية واضحة: مختصر، شرح، مثال، مصادر، وملخص.",
+        "اربط الإجابة بوضوح بمصادر الملفات أو الويب أو اذكر أنها من معرفة النموذج."
+      ],
+      "created_at": "2026-05-31T06:50:20+00:00"
+    },
+    {
+      "evaluation_id": "eval_0d6942453344",
+      "status": "completed",
+      "overall_score": 5.1,
+      "rubric": {
+        "Answer follows requested language": 3,
+        "Uses retrieved context": 5,
+        "Does not hallucinate unsupported claims": 5,
+        "Clear structure": 4,
+        "Correct technical explanation": 7,
+        "Cites sources": 3,
+        "Completeness": 5,
+        "Conciseness according to request": 8,
+        "Educational usefulness": 6,
+        "Formatting quality": 5
+      },
+      "deterministic_checks": [
+        {
+          "name": "arabic_language",
+          "passed": false,
+          "expected": "Arabic answer with only necessary English technical terms",
+          "actual": {
+            "arabic_ratio": 0.83,
+            "disallowed_language": true,
+            "word_count": 58,
+            "disallowed_latin_words": [
+              "Documents",
+              "only.",
+              "Source",
+              "mode",
+              "Web"
+            ],
+            "disallowed_latin_occurrences": [
+              {
+                "word": "Documents",
+                "position": 111,
+                "context": "والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl"
+              },
+              {
+                "word": "only.",
+                "position": 121,
+                "context": "الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D"
+              },
+              {
+                "word": "Source",
+                "position": 132,
+                "context": "مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W"
+              },
+              {
+                "word": "mode",
+                "position": 139,
+                "context": "في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ"
+              },
+              {
+                "word": "Web",
+                "position": 148,
+                "context": "cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال"
+              }
+            ],
+            "disallowed_script_samples": []
+          }
+        },
+        {
+          "name": "required_learning_structure",
+          "passed": false,
+          "expected": [
+            "الفكرة",
+            "الشرح",
+            "مثال",
+            "الدليل",
+            "خلاصة"
+          ],
+          "actual": []
+        },
+        {
+          "name": "source_grounding",
+          "passed": false,
+          "expected": [
+            "file sources"
+          ],
+          "actual": {
+            "has_source_section": false,
+            "mentions_files": true,
+            "mentions_web": true,
+            "mentions_model": false
+          }
+        }
+      ],
+      "llm_judge": null,
+      "gold_standard": null,
+      "rubric_reasons": {
+        "Answer follows requested language": "نسبة الحروف العربية: 0.83. عدد الكلمات: 58. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: Documents, only., Source, mode, Web. أمثلة من النص: `Documents` في: \"والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web onl\" | `only.` في: \"الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو D\" | `Source` في: \"مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + W\" | `mode` في: \"في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذ\" | `Web` في: \"cuments only. غيّر Source mode إلى Web only أو Documents + Web إذا كان ال\".",
+        "Uses retrieved context": "No file context was available or the answer did not clearly connect claims to retrieved sources.",
+        "Does not hallucinate unsupported claims": "Source grounding failed, so unsupported claims are possible.",
+        "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: [].",
+        "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+        "Cites sources": "Source check details: {'has_source_section': False, 'mentions_files': True, 'mentions_web': True, 'mentions_model': False}",
+        "Completeness": "Answer length is 317 characters.",
+        "Conciseness according to request": "Answer length is 317 characters; requested line/word/quiz checks may lower this.",
+        "Educational usefulness": "Looks for an example and a study summary in the answer.",
+        "Formatting quality": "Markdown heading count: 2."
+      },
+      "recommendations": [
+        "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: Documents, only., Source, mode, Web.",
+        "أضف بنية تعليمية واضحة: مختصر، شرح، مثال، مصادر، وملخص.",
+        "اربط الإجابة بوضوح بمصادر الملفات أو الويب أو اذكر أنها من معرفة النموذج."
+      ],
+      "created_at": "2026-05-31T06:50:39+00:00"
+    },
+    {
+      "evaluation_id": "eval_313cd863e2e7",
+      "status": "completed",
+      "overall_score": 7.6,
+      "rubric": {
+        "Answer follows requested language": 3,
+        "Uses retrieved context": 9,
+        "Does not hallucinate unsupported claims": 8,
+        "Clear structure": 9,
+        "Correct technical explanation": 7,
+        "Cites sources": 9,
+        "Completeness": 8,
+        "Conciseness according to request": 8,
+        "Educational usefulness": 6,
+        "Formatting quality": 9
+      },
+      "deterministic_checks": [
+        {
+          "name": "arabic_language",
+          "passed": false,
+          "expected": "Arabic answer with only necessary English technical terms",
+          "actual": {
+            "arabic_ratio": 0.97,
+            "disallowed_language": true,
+            "word_count": 604,
+            "disallowed_latin_words": [
+              "file_14b079d17ceb_9780750677929.pdf"
+            ],
+            "disallowed_latin_occurrences": [
+              {
+                "word": "file_14b079d17ceb_9780750677929.pdf",
+                "position": 3884,
+                "context": "مراجع المستخدمة ## ملفات - مرجع 1: file_14b079d17ceb_9780750677929.pdf، الصفحة 0 - مرجع 3: file_14b079d17"
+              }
+            ],
+            "disallowed_script_samples": []
+          }
+        },
+        {
+          "name": "required_learning_structure",
+          "passed": true,
+          "expected": [
+            "الفكرة",
+            "الشرح",
+            "مثال",
+            "الدليل",
+            "خلاصة"
+          ],
+          "actual": [
+            "الفكرة",
+            "الشرح",
+            "مثال",
+            "الدليل",
+            "خلاصة"
+          ]
+        },
+        {
+          "name": "source_grounding",
+          "passed": true,
+          "expected": [
+            "file sources"
+          ],
+          "actual": {
+            "has_source_section": true,
+            "mentions_files": true,
+            "mentions_web": false,
+            "mentions_model": false
+          }
+        }
+      ],
+      "llm_judge": null,
+      "gold_standard": null,
+      "rubric_reasons": {
+        "Answer follows requested language": "نسبة الحروف العربية: 0.97. عدد الكلمات: 604. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: file_14b079d17ceb_9780750677929.pdf. أمثلة من النص: `file_14b079d17ceb_9780750677929.pdf` في: \"مراجع المستخدمة ## ملفات - مرجع 1: file_14b079d17ceb_9780750677929.pdf، الصفحة 0 - مرجع 3: file_14b079d17\".",
+        "Uses retrieved context": "Passed source grounding with retrieved documents.",
+        "Does not hallucinate unsupported claims": "Source grounding passed.",
+        "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة'].",
+        "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+        "Cites sources": "Answer has a recognizable source section.",
+        "Completeness": "Answer length is 4288 characters.",
+        "Conciseness according to request": "Answer length is 4288 characters; requested line/word/quiz checks may lower this.",
+        "Educational usefulness": "Looks for an example and a study summary in the answer.",
+        "Formatting quality": "Markdown heading count: 20."
+      },
+      "recommendations": [
+        "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: file_14b079d17ceb_9780750677929.pdf."
+      ],
+      "created_at": "2026-05-31T06:53:44+00:00"
+    },
+    {
+      "evaluation_id": "eval_80578db0c621",
+      "status": "completed",
+      "overall_score": 7.7,
+      "rubric": {
+        "Answer follows requested language": 3,
+        "Uses retrieved context": 7,
+        "Does not hallucinate unsupported claims": 8,
+        "Clear structure": 9,
+        "Correct technical explanation": 7,
+        "Cites sources": 9,
+        "Completeness": 8,
+        "Conciseness according to request": 8,
+        "Educational usefulness": 9,
+        "Formatting quality": 9
+      },
+      "deterministic_checks": [
+        {
+          "name": "arabic_language",
+          "passed": false,
+          "expected": "Arabic answer with only necessary English technical terms",
+          "actual": {
+            "arabic_ratio": 0.85,
+            "disallowed_language": true,
+            "word_count": 670,
+            "disallowed_latin_words": [
+              "https",
+              "www.youtube.com",
+              "channel",
+              "UCf7sMN0PCcBJnoa2oa73mQA",
+              "r",
+              "www.reddit.com",
+              "comments",
+              "eli5_the_linux_file_system",
+              "tl",
+              "ar",
+              "www.ashrhly.com",
+              "annotate-pdf"
+            ],
+            "disallowed_latin_occurrences": [
+              {
+                "word": "https",
+                "position": 52,
+                "context": "ب مصادر الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0"
+              },
+              {
+                "word": "www.youtube.com",
+                "position": 60,
+                "context": "الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA -"
+              },
+              {
+                "word": "channel",
+                "position": 76,
+                "context": "اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي"
+              },
+              {
+                "word": "UCf7sMN0PCcBJnoa2oa73mQA",
+                "position": 84,
+                "context": "| https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي كأني عندي 5 سنين] نظام م"
+              },
+              {
+                "word": "r",
+                "position": 156,
+                "context": "ني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.c"
+              },
+              {
+                "word": "www.reddit.com",
+                "position": 180,
+                "context": "ات لينكس : r/linux4noobs | https://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli"
+              },
+              {
+                "word": "comments",
+                "position": 209,
+                "context": "tps://www.reddit.com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system"
+              },
+              {
+                "word": "eli5_the_linux_file_system",
+                "position": 226,
+                "context": "com/r/linux4noobs/comments/1k3kp00/eli5_the_linux_file_system?tl=ar - إشرحلي — المعلم الذكي | ht"
+              },
+              {
+                "word": "tl",
+                "position": 253,
+                "context": "1k3kp00/eli5_the_linux_file_system?tl=ar - إشرحلي — المعلم الذكي | https"
+              },
+              {
+                "word": "ar",
+                "position": 256,
+                "context": "kp00/eli5_the_linux_file_system?tl=ar - إشرحلي — المعلم الذكي | https://"
+              },
+              {
+                "word": "www.ashrhly.com",
+                "position": 293,
+                "context": "- إشرحلي — المعلم الذكي | https://www.ashrhly.com - شرح ملف PDF - مجاني 100% وعبر ال"
+              },
+              {
+                "word": "annotate-pdf",
+                "position": 379,
+                "context": "نترنت | https://tools.pdf24.org/ar/annotate-pdf - A step-by-step guide to using th"
+              }
+            ],
+            "disallowed_script_samples": []
+          }
+        },
+        {
+          "name": "required_learning_structure",
+          "passed": true,
+          "expected": [
+            "الفكرة",
+            "الشرح",
+            "مثال",
+            "الدليل",
+            "خلاصة"
+          ],
+          "actual": [
+            "الشرح",
+            "مثال",
+            "الدليل",
+            "خلاصة"
+          ]
+        },
+        {
+          "name": "source_grounding",
+          "passed": true,
+          "expected": [
+            "web sources"
+          ],
+          "actual": {
+            "has_source_section": true,
+            "mentions_files": true,
+            "mentions_web": true,
+            "mentions_model": false
+          }
+        }
+      ],
+      "llm_judge": null,
+      "gold_standard": null,
+      "rubric_reasons": {
+        "Answer follows requested language": "نسبة الحروف العربية: 0.85. عدد الكلمات: 670. تم تخفيض الدرجة بسبب كلمات إنجليزية غير مسموحة أو غير مفسرة عربيا: https, www.youtube.com, channel, UCf7sMN0PCcBJnoa2oa73mQA, r, www.reddit.com, comments, eli5_the_linux_file_system, tl, ar, www.ashrhly.com, annotate-pdf. أمثلة من النص: `https` في: \"ب مصادر الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0\" | `www.youtube.com` في: \"الويب التالية: - اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA -\" | `channel` في: \"اشرح لي | https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي\" | `UCf7sMN0PCcBJnoa2oa73mQA` في: \"| https://www.youtube.com/channel/UCf7sMN0PCcBJnoa2oa73mQA - [اشرحلي كأني عندي 5 سنين] نظام م\" | `r` في: \"ني عندي 5 سنين] نظام ملفات لينكس : r/linux4noobs | https://www.reddit.c\".",
+        "Uses retrieved context": "No file context was available or the answer did not clearly connect claims to retrieved sources.",
+        "Does not hallucinate unsupported claims": "Source grounding passed.",
+        "Clear structure": "العناصر المطلوبة: ['الفكرة', 'الشرح', 'مثال', 'الدليل', 'خلاصة']. العناصر الموجودة: ['الشرح', 'مثال', 'الدليل', 'خلاصة'].",
+        "Correct technical explanation": "Deterministic evaluator keeps this neutral; use LLM judge for deeper technical scoring.",
+        "Cites sources": "Answer has a recognizable source section.",
+        "Completeness": "Answer length is 4535 characters.",
+        "Conciseness according to request": "Answer length is 4535 characters; requested line/word/quiz checks may lower this.",
+        "Educational usefulness": "Looks for an example and a study summary in the answer.",
+        "Formatting quality": "Markdown heading count: 22."
+      },
+      "recommendations": [
+        "راجع اللغة: يجب أن تكون الإجابة عربية مع السماح بالمصطلحات التقنية الضرورية فقط. الكلمات التي سببت المشكلة: https, www.youtube.com, channel, UCf7sMN0PCcBJnoa2oa73mQA, r, www.reddit.com, comments, eli5_the_linux_file_system, tl, ar, www.ashrhly.com, annotate-pdf."
+      ],
+      "created_at": "2026-05-31T06:59:29+00:00"
+    }
+  ],
+  "active_quiz": null,
+  "quiz_history": [],
+  "stats": {
+    "prompts_count": 4,
+    "created_at": "2026-05-31T06:49:42+00:00",
+    "total_response_time_ms": 31955,
+    "tokens_total": null
+  },
+  "indexing_status": "READY",
+  "indexing_step": "Ready"
+}

@@ -10,10 +10,13 @@ ALLOWED_LATIN_TERMS = {
     "ai",
     "api",
     "bert",
+    "crag",
     "csv",
     "docx",
     "f1",
     "faiss",
+    "flare",
+    "gpt",
     "gpu",
     "html",
     "ircot",
@@ -24,7 +27,10 @@ ALLOWED_LATIN_TERMS = {
     "pdf",
     "qa",
     "rag",
+    "ragbench",
     "rouge",
+    "self-rag",
+    "top-k",
     "transformer",
     "transformers",
     "url",
@@ -46,6 +52,39 @@ def contains_disallowed_language(text: str) -> bool:
     if DISALLOWED_SCRIPT_RE.search(text or ""):
         return True
     return any(not _is_allowed_latin_word(word) for word in LATIN_WORD_RE.findall(text or ""))
+
+
+def disallowed_language_details(text: str, limit: int = 12) -> dict:
+    raw_text = text or ""
+    scripts_found = sorted(set(DISALLOWED_SCRIPT_RE.findall(raw_text)))
+    latin_words: list[str] = []
+    occurrences: list[dict[str, str | int]] = []
+    seen = set()
+    for match in LATIN_WORD_RE.finditer(raw_text):
+        word = match.group(0)
+        if _is_allowed_latin_word(word):
+            continue
+        normalized = word.lower().strip("_+-.")
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        latin_words.append(word)
+        start = max(match.start() - 35, 0)
+        end = min(match.end() + 35, len(raw_text))
+        occurrences.append(
+            {
+                "word": word,
+                "position": match.start(),
+                "context": raw_text[start:end].replace("\n", " ").strip(),
+            }
+        )
+        if len(latin_words) >= limit:
+            break
+    return {
+        "disallowed_latin_words": latin_words,
+        "disallowed_latin_occurrences": occurrences,
+        "disallowed_script_samples": scripts_found[:limit],
+    }
 
 
 def strip_disallowed_language(text: str) -> str:
@@ -86,4 +125,3 @@ def enforce_arabic_answer(answer: str, query: str, llm) -> str:
         current = llm.invoke(repair_prompt).content
 
     return strip_disallowed_language(current)
-
