@@ -71,6 +71,18 @@ EVALUATOR_LLM_ENABLED = os.getenv("EVALUATOR_LLM_ENABLED", "false").lower() in {
     "on",
 }
 EVALUATOR_LLM_TEMPERATURE = float(os.getenv("EVALUATOR_LLM_TEMPERATURE", "0"))
+ENABLE_RAGAS_EVAL = os.getenv("ENABLE_RAGAS_EVAL", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+ENABLE_DEEPEVAL_EVAL = os.getenv("ENABLE_DEEPEVAL_EVAL", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 EMBEDDING_MODEL_NAME = os.getenv(
     "EMBEDDING_MODEL_NAME",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",

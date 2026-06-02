@@ -18,14 +18,15 @@ from src.config import (
     QUIZ_SYNTHETIC_FALLBACK_ENABLED,
     TOP_K,
 )
+from src.evaluation.rag_evaluation_service import RAGEvaluationInput, RAGEvaluationService
 from src.evaluation.response_evaluator import evaluate_response
-from src.graph.schemas import Quiz, model_to_dict
+from src.graph.schemas import PlannerDecision, Quiz, ToolCallPlan, ToolCallRequest, ToolCallResponse, model_to_dict
 from src.graph.state import StudyGraphState
 from src.llm import get_llm, model_is_configured, resolve_model_profile
-from src.prompts import FEEDBACK_FROM_QUIZ_PROMPT, QUIZ_JSON_PROMPT, STUDY_PLAN_FROM_WEAKNESS_PROMPT
-from src.tools.calculator_tool import CalculatorTool, calculation_needed
+from src.prompts import FEEDBACK_FROM_QUIZ_PROMPT, FUNCTION_CALLING_PROMPT, QUIZ_JSON_PROMPT, ROUTER_PROMPT, STUDY_PLAN_FROM_WEAKNESS_PROMPT
 from src.tools.citation_checker_tool import CitationCheckerTool
 from src.tools.quiz_grading_tool import QuizGradingTool
+from src.tools.tool_registry import execute_registered_tool
 from src.tools.web_search_tool import WebSearchTool
 
 
@@ -177,7 +178,6 @@ TASK_AGENT_NAMES = {
     "quiz_generate": "Quiz",
     "study_plan": "Study Plan",
     "web_search": "Web Search",
-    "calculator": "Calculator",
     "quiz_feedback": "Feedback",
     "feedback": "Feedback",
     "clarify": "Input Guard",
@@ -189,7 +189,6 @@ TASK_ROUTES = {
     "quiz_generate": "quiz_generate",
     "study_plan": "study_plan",
     "web_search": "web_search",
-    "calculator": "calculator",
     "quiz_feedback": "quiz_feedback",
     "feedback": "feedback",
     "clarify": "clarify",
@@ -213,7 +212,6 @@ def _execution_route(state: StudyGraphState) -> str:
 
 def _selected_agent_for_route(route: str) -> str:
     return {
-        "calculator": "Calculator",
         "summary": "Summary",
         "quiz_generate": "Quiz",
         "quiz_feedback": "Feedback",
@@ -279,6 +277,7 @@ def _has_explicit_document_intent(text: str) -> bool:
         "my file",
         "uploaded",
         "ملف",
+        "ملفي",
         "الملف",
         "فايل",
         "الفايل",
@@ -333,7 +332,12 @@ def _wants_study_report(text: str, query: str) -> bool:
         "لخص",
         "تلخيص",
         "اشرح الملف",
+        "اشرح ملفي",
+        "اشرحلي الملف",
+        "اشرحلى الملف",
         "اشرح المستند",
+        "اشرحلي المستند",
+        "اشرحلى المستند",
         "اشرح الفايل",
         "اشرحلي الفايل",
         "اشرحلى الفايل",
@@ -377,75 +381,6 @@ def _dedupe_tasks(tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         deduped.append(item)
         seen.add(task_type)
     return deduped
-
-
-def _planned_tasks_for_query(state: StudyGraphState, text: str) -> list[dict[str, Any]]:
-    query = state.get("user_query", "")
-    source_scope = state.get("source_scope", "Documents only")
-    web_enabled = bool(state.get("web_enabled"))
-
-    if state.get("quiz") and state.get("user_answers") is not None:
-        return [_task("quiz_feedback", "مراجعة الاختبار")]
-    if not state.get("quiz") and _is_low_information_query(query):
-        return [_task("clarify", "توضيح الطلب")]
-    if calculation_needed(text) and _looks_arithmetic(text):
-        return [_task("calculator", "الحساب")]
-    if source_scope == "Web only" and (_has_explicit_document_intent(text) or _is_generic_document_request(text)):
-        return [_task("clarify", "اختيار المستندات")]
-    if source_scope in {"Documents only", "Documents + Web"} and _is_generic_document_request(text):
-        return [_task("summary", "الملخص")]
-
-    tasks: list[dict[str, Any]] = []
-    explicit_doc_task = _has_explicit_document_intent(text)
-    explicit_web_task = source_scope == "Web only" or (
-        not explicit_doc_task and _has_current_web_intent(text)
-    )
-    needs_web = web_enabled and explicit_web_task
-    needs_docs = _needs_docs(text, source_scope)
-
-    if needs_web:
-        tasks.append(_task("web_search", "بحث الويب"))
-    if (_has_explain_intent(text) and not _is_document_overview_query(query)) or not any(
-        [
-            _has_summary_intent(text, query),
-            _has_quiz_intent(text),
-            _has_study_plan_intent(text),
-            _has_feedback_intent(text),
-            needs_web or explicit_web_task,
-        ]
-    ):
-        tasks.append(_task("explain", "الشرح"))
-    if _has_summary_intent(text, query):
-        tasks.append(_task("summary", "الملخص"))
-    if _has_quiz_intent(text):
-        tasks.append(_task("quiz_generate", "الاختبار", num_questions=_requested_question_count(query)))
-    if _has_study_plan_intent(text):
-        tasks.append(_task("study_plan", "خطة المذاكرة"))
-    if _has_feedback_intent(text):
-        tasks.append(_task("feedback", "التصحيح"))
-
-    if needs_docs and not tasks:
-        tasks.append(_task("explain", "الشرح"))
-    return _dedupe_tasks(tasks or [_task("explain", "الشرح")])
-
-
-def _legacy_route_from_tasks(state: StudyGraphState, tasks: list[dict[str, Any]], text: str) -> str:
-    types = [task.get("type") for task in tasks]
-    source_scope = state.get("source_scope", "Documents only")
-    web_enabled = bool(state.get("web_enabled"))
-
-    if len(types) > 1:
-        return "multi_task"
-    only = types[0] if types else "explain"
-    if only == "explain":
-        if _needs_docs(text, source_scope) and _needs_web(text, source_scope, web_enabled):
-            return "documents_plus_web"
-        if _needs_web(text, source_scope, web_enabled):
-            return "web_search"
-        return "tutor_rag"
-    if only == "quiz_feedback":
-        return "multi_task"
-    return TASK_ROUTES.get(only, "tutor_rag")
 
 
 def _task_needs_documents(task_type: str) -> bool:
@@ -525,7 +460,11 @@ def _is_document_overview_query(query: str) -> bool:
         "summarize file",
         "overview",
         "اشرح الملف",
+        "اشرحلي الملف",
+        "اشرحلى الملف",
         "اشرح المستند",
+        "اشرحلي المستند",
+        "اشرحلى المستند",
         "اشرح الفايل",
         "اشرحلي الفايل",
         "اشرحلى الفايل",
@@ -537,17 +476,24 @@ def _is_document_overview_query(query: str) -> bool:
     return any(word in text for word in overview_words)
 
 
-def _looks_arithmetic(text: str) -> bool:
-    calc_words = ["احسب", "حساب", "ناتج", "متوسط"]
-    has_operator_expression = bool(re.search(r"\d+\s*[-+*/%^]\s*\d+", text))
-    has_english_calc_word = bool(re.search(r"\b(calculate|compute|sum|average)\b", text))
-    return any(word in text for word in calc_words) or has_english_calc_word or has_operator_expression
-
-
 def _has_quiz_intent(text: str) -> bool:
     latin_quiz = bool(re.search(r"\b(quiz|mcq|test|questions?)\b", text))
     arabic_quiz = any(word in text for word in ["اختبر", "اختبار", "أسئلة", "اسئلة", "كويز", "امتحان", "اختبرني"])
     return latin_quiz or arabic_quiz
+
+
+def _extract_arithmetic_expression(text: str) -> str | None:
+    candidates = re.findall(r"[-+*/().%^ 0-9]{3,}", text or "")
+    candidates = [
+        candidate.strip()
+        for candidate in candidates
+        if any(char.isdigit() for char in candidate) and re.search(r"\d\s*[-+*/%^]\s*\d", candidate)
+    ]
+    return max(candidates, key=len) if candidates else None
+
+
+def _has_arithmetic_request(text: str) -> bool:
+    return _extract_arithmetic_expression(text) is not None
 
 
 def _has_explain_intent(text: str) -> bool:
@@ -614,34 +560,176 @@ def _is_low_information_query(query: str) -> bool:
     return False
 
 
+def _default_task_for_route(route: str) -> dict[str, Any]:
+    return {
+        "summary": _task("summary", "الملخص"),
+        "quiz_generate": _task("quiz_generate", "الاختبار"),
+        "study_plan": _task("study_plan", "خطة المذاكرة"),
+        "web_search": _task("web_search", "بحث الويب"),
+        "feedback": _task("feedback", "التصحيح"),
+        "clarify": _task("clarify", "توضيح الطلب"),
+    }.get(route, _task("explain", "الشرح"))
+
+
+def _normalize_planner_tasks(tasks: list[dict[str, Any]], route: str) -> list[dict[str, Any]]:
+    allowed = {"explain", "summary", "quiz_generate", "study_plan", "web_search", "quiz_feedback", "feedback", "clarify"}
+    normalized: list[dict[str, Any]] = []
+    for item in tasks or []:
+        task_type = str(item.get("type") or "").strip().lower()
+        if task_type == "calculator":
+            task_type = "explain"
+        if task_type not in allowed:
+            continue
+        title = str(item.get("title") or TASK_AGENT_NAMES.get(task_type) or task_type)
+        normalized.append(_task(task_type, title, num_questions=item.get("num_questions")))
+    return _dedupe_tasks(normalized or [_default_task_for_route(route)])
+
+
+def _filter_planned_tool_calls(
+    tool_calls: list[ToolCallRequest],
+    source_scope: str,
+    web_enabled: bool,
+) -> list[ToolCallRequest]:
+    filtered: list[ToolCallRequest] = []
+    for call in tool_calls:
+        if call.tool_name == "document_search" and source_scope == "Web only":
+            continue
+        if call.tool_name == "web_search" and (not web_enabled or source_scope == "Documents only"):
+            continue
+        filtered.append(call)
+    return ToolCallPlan(tool_calls=filtered).tool_calls
+
+
+def _enforce_source_policy(decision: PlannerDecision, source_scope: str, web_enabled: bool) -> PlannerDecision:
+    if source_scope == "Documents only":
+        decision.needs_web = False
+        if decision.route in {"web_search", "documents_plus_web"}:
+            decision.route = "tutor_rag"
+        decision.tasks = [task for task in decision.tasks if task.get("type") != "web_search"]
+    elif source_scope == "Web only":
+        decision.needs_documents = False
+        if decision.route in {"tutor_rag", "summary", "quiz_generate", "study_plan", "documents_plus_web"}:
+            decision.route = "web_search" if web_enabled else "clarify"
+        decision.tasks = [task for task in decision.tasks if task.get("type") not in {"summary", "quiz_generate"}]
+    elif source_scope == "Documents + Web" and web_enabled and decision.needs_documents:
+        decision.needs_web = True
+        if decision.needs_documents and not any(task.get("type") == "web_search" for task in decision.tasks):
+            decision.tasks = list(decision.tasks) + [_task("web_search", "بحث الويب المرتبط بالملف")]
+    return decision
+
+
+def _planner_decision_from_payload(
+    payload: dict[str, Any],
+    query: str,
+    source_scope: str,
+    web_enabled: bool,
+) -> PlannerDecision:
+    decision = PlannerDecision(**payload)
+    text = (query or "").lower()
+    arithmetic_expression = _extract_arithmetic_expression(query)
+    if source_scope != "Web only" and _is_document_overview_query(query):
+        decision.route = "summary"
+        decision.tasks = [_task("summary", "شرح الملف")]
+        decision.selected_agent = "Summary"
+        decision.needs_documents = True
+        decision.answer_style = "study_report"
+        if not any(call.tool_name == "document_search" for call in decision.tool_calls):
+            decision.tool_calls = [
+                ToolCallRequest(
+                    tool_name="document_search",
+                    arguments={"query": query, "top_k": max(TOP_K, 10)},
+                    reasoning="The user asked to explain the uploaded file.",
+                )
+            ] + list(decision.tool_calls or [])
+
+    if arithmetic_expression and not _has_quiz_intent(text):
+        decision.tasks = [task for task in decision.tasks if str(task.get("type") or "") != "quiz_generate"]
+        if decision.route == "quiz_generate":
+            decision.route = "tutor_rag"
+            decision.selected_agent = "RAG Tutor"
+        if not decision.tasks:
+            decision.tasks = [_task("explain", "الإجابة")]
+        if not any(call.tool_name == "calculator" for call in decision.tool_calls):
+            decision.tool_calls = [
+                ToolCallRequest(
+                    tool_name="calculator",
+                    arguments={"expression": arithmetic_expression},
+                    reasoning="The user requested an arithmetic calculation.",
+                )
+            ] + list(decision.tool_calls or [])
+    decision.tasks = _normalize_planner_tasks(decision.tasks, decision.route)
+    if len(decision.tasks) > 1:
+        decision.route = "multi_task"
+    decision.needs_documents = bool(decision.needs_documents and source_scope != "Web only")
+    decision.needs_web = bool(decision.needs_web and web_enabled and source_scope != "Documents only")
+    decision = _enforce_source_policy(decision, source_scope, web_enabled)
+    decision.tasks = _normalize_planner_tasks(decision.tasks, decision.route)
+    if len(decision.tasks) > 1 and decision.route not in {"documents_plus_web"}:
+        decision.route = "multi_task"
+    elif len(decision.tasks) == 1 and decision.route == "multi_task":
+        only = str((decision.tasks[0] or {}).get("type") or "explain")
+        decision.route = "tutor_rag" if only == "explain" else TASK_ROUTES.get(only, "tutor_rag")
+    decision.tool_calls = _filter_planned_tool_calls(decision.tool_calls, source_scope, web_enabled)
+    if not decision.selected_agent:
+        decision.selected_agent = _selected_agent_for_route(decision.route)
+    return decision
+
+
 def router_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
     settings = _set_llm_settings(state)
-    query = state.get("user_query", "")
-    text = query.lower()
     source_scope = state.get("source_scope", "Documents only")
     web_enabled = bool(state.get("web_enabled"))
+    prompt = f"""
+{ROUTER_PROMPT}
 
-    tasks = _planned_tasks_for_query(state, text)
-    route = _legacy_route_from_tasks(state, tasks, text)
-    needs_documents = _tasks_need_documents(tasks, source_scope)
-    needs_web = _tasks_need_web(tasks, source_scope, web_enabled)
-    answer_style = "study_report" if _wants_study_report(text, query) else "direct"
+USER QUERY:
+{state.get("user_query", "")}
 
+SOURCE MODE:
+{source_scope}
+
+WEB ENABLED:
+{web_enabled}
+
+HAS ACTIVE QUIZ:
+{bool(state.get("quiz"))}
+
+HAS SUBMITTED QUIZ ANSWERS:
+{state.get("user_answers") is not None}
+"""
+    try:
+        raw = _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 25))
+        decision = _planner_decision_from_payload(_json_from_text(raw), state.get("user_query", ""), source_scope, web_enabled)
+    except Exception as exc:
+        state["error"] = str(exc)
+        decision = PlannerDecision(
+            route="clarify",
+            tasks=[_task("clarify", "تعذر التخطيط")],
+            selected_agent="Input Guard",
+            needs_documents=False,
+            needs_web=False,
+            answer_style="direct",
+            tool_calls=[ToolCallRequest(tool_name="none", arguments={}, reasoning="Planner LLM failed.")],
+        )
+
+    route = decision.route
+    tasks = decision.tasks
     state.setdefault("task_outputs", {})
     state.setdefault("task_results", [])
     state.setdefault("final_sections", [])
     state.update(
         {
             "route": route,
-            "selected_agent": _selected_agent_for_route(route),
+            "selected_agent": decision.selected_agent or _selected_agent_for_route(route),
             "intent": [str(task.get("type")) for task in tasks],
             "tasks": tasks,
             "current_task_index": 0,
             "is_multi_task": route == "multi_task",
-            "needs_documents": needs_documents,
-            "needs_web": needs_web,
-            "answer_style": answer_style,
+            "needs_documents": decision.needs_documents,
+            "needs_web": decision.needs_web,
+            "answer_style": decision.answer_style,
+            "planned_tool_calls": [model_to_dict(call) for call in decision.tool_calls],
             "next_action": None,
         }
     )
@@ -649,81 +737,201 @@ def router_node(state: StudyGraphState) -> StudyGraphState:
     trace["planner"] = {
         "route": route,
         "tasks": tasks,
-        "needs_documents": needs_documents,
-        "needs_web": needs_web,
-        "answer_style": answer_style,
+        "needs_documents": decision.needs_documents,
+        "needs_web": decision.needs_web,
+        "answer_style": decision.answer_style,
+        "planned_tool_calls": state.get("planned_tool_calls") or [],
     }
     state["trace"] = trace
     if route == "clarify":
-        clarify_task = (tasks[0] or {}).get("title") if tasks else ""
-        if clarify_task == "تفعيل الويب":
-            state["final_answer"] = _direct_answer(
-                "هذا سؤال يحتاج مصدرا حديثا أو بحثا مباشرا في الويب. البحث في الويب غير مفعّل حاليا، لذلك لن أستخدم ملفاتك غير المرتبطة للإجابة. فعّل Web only أو Documents + Web ثم أعد السؤال.",
-                "سياسة اختيار المصادر",
-            )
-            state["next_action"] = "final"
-            _record(state, "Planner", started, output=f"{route} | live source required | {settings['provider']}:{settings['model']}")
-            return state
-        if clarify_task == "اختيار المستندات":
-            state["final_answer"] = _direct_answer(
-                "طلبك يشير إلى الملف المرفوع، لكن Source mode مضبوط على Web only. غيّر Source mode إلى Documents only أو Documents + Web ثم أعد السؤال حتى أشرح الملف نفسه.",
-                "سياسة اختيار المصادر",
-            )
-            state["next_action"] = "final"
-            _record(state, "Planner", started, output=f"{route} | document source required | {settings['provider']}:{settings['model']}")
-            return state
         state["final_answer"] = _direct_answer(
-            "لم أفهم الطلب بشكل كاف. اكتب سؤالا أو أمرا دراسيا واضحا، مثلا: اشرح RAG من الملف، أو اعمل اختبار MCQ من المحاضرة.",
-            "حارس جودة السؤال",
+            "أحتاج طلبا أوضح أو وضع مصادر مناسب قبل أن أبدأ. اكتب مثلا: اشرح الملف، اعمل اختبارا من المحاضرة، أو فعّل الويب إذا كان السؤال عن معلومة حديثة.",
+            "مخطط سير العمل",
         )
         state["next_action"] = "final"
-    _record(state, "Planner", started, output=f"{route} | tasks={len(tasks)} | {settings['provider']}:{settings['model']}")
+    _record(
+        state,
+        "Planner",
+        started,
+        status="error" if state.get("error") else "ok",
+        output=f"{route} | tasks={len(tasks)} | tools={len(state.get('planned_tool_calls') or [])} | {settings['provider']}:{settings['model']}",
+    )
     return state
 
-    if not state.get("quiz") and _is_low_information_query(query):
-        route = "clarify"
-    elif state.get("quiz") and state.get("user_answers"):
-        route = "multi_task"
-    elif calculation_needed(text) and _looks_arithmetic(text):
-        route = "calculator"
-    elif _has_explain_intent(text) and _has_quiz_intent(text):
-        route = "multi_task"
-    elif _has_quiz_intent(text):
-        route = "quiz_generate"
-    elif any(word in text for word in ["feedback", "evaluate", "correct", "score", "قيّم", "قيم", "صحح", "درجة"]):
-        route = "feedback"
-    elif any(word in text for word in ["plan", "schedule", "roadmap", "خطة", "جدول", "ذاكر"]):
-        route = "study_plan"
-    elif _is_document_overview_query(query) or any(word in text for word in ["summary", "summarize", "تلخيص", "لخص", "ملخص"]):
-        route = "summary"
-    elif source_scope == "Documents + Web" or (_needs_docs(text, source_scope) and _needs_web(text, source_scope, web_enabled)):
-        route = "documents_plus_web"
-    elif _needs_web(text, source_scope, web_enabled):
-        route = "web_search"
-    else:
-        route = "tutor_rag"
 
-    selected_agent = {
-        "calculator": "Calculator",
-        "summary": "Summary",
-        "quiz_generate": "Quiz",
-        "quiz_feedback": "Feedback",
-        "multi_task": "Planner",
-        "feedback": "Feedback",
-        "study_plan": "Study Plan",
-        "web_search": "Web Search",
-        "documents_plus_web": "RAG Tutor + Web Search",
-        "tutor_rag": "RAG Tutor",
-        "clarify": "Input Guard",
-    }[route]
-    state.update({"route": route, "selected_agent": selected_agent, "intent": [route], "next_action": None})
-    if route == "clarify":
-        state["final_answer"] = _direct_answer(
-            "لم أفهم الطلب بشكل كاف. اكتب سؤالا أو أمرا دراسيا واضحا، مثلا: اشرح RAG من الملف، أو اعمل اختبار MCQ من المحاضرة.",
-            "حارس جودة السؤال",
+def _tool_call_to_context(tool_name: str, result: dict[str, Any]) -> str:
+    payload = result.get("result") or {}
+    if tool_name == "calculator":
+        if payload.get("ok"):
+            return f"FUNCTION TOOL RESULT - calculator:\nExpression: {payload.get('expression')}\nResult: {payload.get('result')}"
+        return f"FUNCTION TOOL RESULT - calculator error:\n{payload.get('error')}"
+    if tool_name == "document_search":
+        return str(payload.get("context") or "")
+    if tool_name == "web_search":
+        rows = []
+        for idx, item in enumerate(payload.get("results") or [], start=1):
+            rows.append(
+                f"[Function Web {idx}]\nTitle: {item.get('title')}\nURL: {item.get('url')}\nSnippet: {item.get('snippet')}"
+            )
+        return "\n\n".join(rows)
+    if tool_name == "flashcard_generator":
+        return "FUNCTION TOOL RESULT - flashcards:\n" + json.dumps(payload, ensure_ascii=False)
+    if tool_name == "concept_extractor":
+        return "FUNCTION TOOL RESULT - concepts:\n" + ", ".join(payload.get("concepts") or [])
+    if tool_name == "study_progress":
+        return "FUNCTION TOOL RESULT - study progress:\n" + json.dumps(payload, ensure_ascii=False)
+    return ""
+
+
+def _calculator_result_section(state: StudyGraphState, answer: str) -> str:
+    sections: list[str] = []
+    for item in state.get("tool_results") or []:
+        if item.get("tool_name") != "calculator" or not item.get("ok"):
+            continue
+        payload = item.get("result") or {}
+        if not payload.get("ok"):
+            continue
+        result_text = str(payload.get("result"))
+        if result_text and result_text in (answer or ""):
+            continue
+        expression = str(payload.get("expression") or "").strip()
+        sections.append(
+            "\n".join(
+                [
+                    "## نتيجة الحساب",
+                    f"- العملية: `{expression}`",
+                    f"- الناتج: `{result_text}`",
+                ]
+            )
         )
-        state["next_action"] = "final"
-    _record(state, "Router", started, output=f"{route} | {settings['provider']}:{settings['model']}")
+    return "\n\n".join(sections)
+
+
+def tool_calling_node(state: StudyGraphState) -> StudyGraphState:
+    """LLM function-calling learning node.
+
+    Function Calling is different from LangGraph routing:
+    - The router chooses the high-level workflow path, such as summary, quiz, or RAG.
+    - Function calling lets the LLM select one small capability/tool inside that path.
+
+    The LLM never executes tools. It returns structured JSON saying which tool it
+    wants and which arguments to pass. Python validates the JSON, executes the
+    actual tool, then stores the result in state and appends useful output to
+    `state["context"]` so the later answer node can use it.
+    """
+
+    started = perf_counter()
+    route = state.get("route")
+    planned_tool_calls = state.get("planned_tool_calls") or []
+    if planned_tool_calls:
+        plan = ToolCallPlan(tool_calls=[ToolCallRequest(**call) for call in planned_tool_calls])
+        plan.tool_calls = _filter_planned_tool_calls(
+            plan.tool_calls,
+            state.get("source_scope", "Documents only"),
+            bool(state.get("web_enabled")),
+        )
+    elif route in {"clarify"} or state.get("next_action") == "final":
+        plan = ToolCallPlan(
+            tool_calls=[
+                ToolCallRequest(tool_name="none", arguments={}, reasoning="No function tool is needed for this graph route.")
+            ]
+        )
+    else:
+        # This is the "function calling" LLM step: ask for JSON only. The model
+        # is not trusted to run code or touch files; it only chooses a tool.
+        prompt = f"""
+{FUNCTION_CALLING_PROMPT}
+
+USER QUERY:
+{state.get("user_query", "")}
+
+SOURCE MODE:
+{state.get("source_scope", "Documents only")}
+
+WEB ENABLED:
+{bool(state.get("web_enabled"))}
+
+CURRENT ROUTE:
+{state.get("route")}
+
+AVAILABLE CONTEXT PREVIEW:
+{(state.get("context") or "")[:1200]}
+"""
+        try:
+            raw = _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 20))
+            payload = _json_from_text(raw)
+            if "tool_calls" in payload:
+                plan = ToolCallPlan(**payload)
+            else:
+                plan = ToolCallPlan(tool_calls=[ToolCallRequest(**payload)])
+            plan.tool_calls = _filter_planned_tool_calls(
+                plan.tool_calls,
+                state.get("source_scope", "Documents only"),
+                bool(state.get("web_enabled")),
+            )
+        except Exception as exc:
+            # No hidden deterministic fallback here: this feature is meant to
+            # teach real function calling, so tool choice belongs to the LLM.
+            # If the LLM cannot provide valid JSON, Python chooses no tool and
+            # records the reason for observability.
+            state.setdefault("trace", {})["function_calling_error"] = str(exc)
+            plan = ToolCallPlan(
+                tool_calls=[
+                    ToolCallRequest(
+                        tool_name="none",
+                        arguments={},
+                        reasoning=f"LLM tool selection failed: {str(exc)[:160]}",
+                    )
+                ]
+            )
+
+    # Python executes the selected tool. This is the core safety boundary:
+    # LLM chooses intent; application code validates and performs the action.
+    call_dicts: list[dict[str, Any]] = []
+    response_dicts: list[dict[str, Any]] = []
+    context_chunks: list[str] = []
+    for call in plan.tool_calls:
+        result = execute_registered_tool(call.tool_name, call.arguments, state)
+        response = ToolCallResponse(
+            tool_name=call.tool_name,
+            arguments=call.arguments,
+            reasoning=call.reasoning,
+            ok=bool(result.get("ok")),
+            result=result.get("result") or {},
+            error=result.get("error"),
+        )
+        call_dicts.append(model_to_dict(call))
+        response_dicts.append(model_to_dict(response))
+        if call.tool_name != "none":
+            _add_tool(state, f"function:{call.tool_name}")
+
+        # Tool outputs are stored in graph state for observability and future nodes.
+        # When useful, they are also injected into context so the normal prompt/LLM
+        # answer path can cite or use them without changing the existing agents.
+        if call.tool_name == "document_search" and result.get("useful"):
+            payload = result.get("result") or {}
+            state["docs"] = payload.get("docs") or state.get("docs") or []
+        if call.tool_name == "web_search" and result.get("useful"):
+            payload = result.get("result") or {}
+            state["web_sources"] = payload.get("results") or state.get("web_sources") or []
+
+        context_addition = _tool_call_to_context(call.tool_name, result)
+        if context_addition.strip():
+            context_chunks.append(context_addition)
+
+    state["tool_calls"] = call_dicts
+    state["tool_results"] = response_dicts
+    state["tool_call"] = call_dicts[0] if len(call_dicts) == 1 else {"tool_calls": call_dicts}
+    state["tool_result"] = response_dicts[0] if len(response_dicts) == 1 else {"tool_results": response_dicts}
+
+    if context_chunks:
+        base_context = state.get("context") or ""
+        state["context"] = f"{base_context}\n\nFUNCTION CALL CONTEXT:\n" + "\n\n".join(context_chunks)
+        state["context"] = state["context"].strip()
+
+    selected = ", ".join(call.get("tool_name", "none") for call in call_dicts) or "none"
+    reasons = "; ".join(call.get("reasoning", "") for call in call_dicts if call.get("reasoning"))
+    _record(state, "Function Calling", started, output=f"{selected}: {reasons}")
     return state
 
 
@@ -819,21 +1027,6 @@ def final_composer_node(state: StudyGraphState) -> StudyGraphState:
     else:
         state["next_action"] = "final"
     _record(state, "Final Composer", started, output=f"sections={len(sections)}")
-    return state
-
-
-def calculator_node(state: StudyGraphState) -> StudyGraphState:
-    started = perf_counter()
-    result = CalculatorTool().run(state.get("user_query", ""))
-    _add_tool(state, "calculator")
-    if result.get("ok"):
-        state["final_answer"] = _direct_answer(
-            f"نتيجة العملية `{result['expression']}` هي: `{result['result']}`.",
-            "أداة الحاسبة",
-        )
-    else:
-        state["final_answer"] = _direct_answer(result.get("error", "تعذر تنفيذ العملية الحسابية."), "أداة الحاسبة")
-    _record(state, "Calculator", started, output=state.get("final_answer", ""))
     return state
 
 
@@ -939,9 +1132,38 @@ def _sample_uploaded_documents(chat_id: str | None, max_docs: int = 4, max_chars
     return "\n\n".join(context_parts), docs
 
 
+def _document_grounded_web_query(state: StudyGraphState) -> str:
+    user_query = (state.get("user_query") or "").strip()
+    context = (state.get("context") or "").strip()
+    if not context:
+        context = "\n".join(str(doc.get("snippet") or "") for doc in (state.get("docs") or [])[:4]).strip()
+    if state.get("source_scope") == "Documents + Web" and context:
+        compact_context = re.sub(r"\s+", " ", context)[:1200]
+        return (
+            f"{user_query}\n\n"
+            "Search for external information that is specifically related to this uploaded document content. "
+            "Do not search the generic wording of the user request alone.\n"
+            f"Document content preview: {compact_context}"
+        )
+    return user_query
+
+
 def web_search_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
-    result = WebSearchTool().search(state.get("user_query", ""))
+    if state.get("source_scope") == "Documents only" or not state.get("web_enabled"):
+        state["web_sources"] = []
+        if state.get("route") == "web_search":
+            state["final_answer"] = _direct_answer(
+                "البحث في الويب غير مفعّل في وضع المصادر الحالي. اختر Web only أو Documents + Web إذا أردت استخدام الويب.",
+                "سياسة اختيار المصادر",
+            )
+            state["next_action"] = "final"
+        _record(state, "Web Search", started, output="skipped by source mode")
+        return state
+
+    query = _document_grounded_web_query(state)
+    result = WebSearchTool().search(query)
+    state.setdefault("trace", {})["web_search_query"] = query[:1600]
     state["web_sources"] = result["results"]
     _add_tool(state, "web_search")
     web_context = "\n\n".join(
@@ -1003,7 +1225,9 @@ def tutor_answer_node(state: StudyGraphState) -> StudyGraphState:
             "حالة نموذج اللغة",
         )
     if state.get("raw_answer"):
-        state["final_answer"] = state["raw_answer"]
+        answer = state["raw_answer"]
+        calculator_section = _calculator_result_section(state, answer)
+        state["final_answer"] = f"{answer.rstrip()}\n\n{calculator_section}" if calculator_section else answer
     _record(state, "Tutor Answer", started, status="error" if state.get("error") else "ok", output=state.get("raw_answer", ""))
     return state
 
@@ -1426,6 +1650,131 @@ def arabic_guard_node(state: StudyGraphState) -> StudyGraphState:
     return state
 
 
+def _skip_quality_agents_for_quiz(state: StudyGraphState) -> bool:
+    return bool(
+        state.get("quiz")
+        and state.get("next_action") == "await_quiz_submission"
+        and not state.get("final_sections")
+    )
+
+
+def reflection_node(state: StudyGraphState) -> StudyGraphState:
+    """Run the self-review agent after answer generation.
+
+    Reflection is a constructive review pass: it checks whether the answer
+    followed the request, is beginner-friendly, Arabic, grounded, and structured.
+    It runs before citation/evaluation so an improved answer can still receive
+    citations and normal quality checks.
+    """
+
+    started = perf_counter()
+    if not state.get("reflection_enabled", True):
+        state["reflection_result"] = {"status": "disabled"}
+        state.setdefault("trace", {})["reflection"] = state["reflection_result"]
+        _record(state, "Reflection Agent", started, output="disabled")
+        return state
+    if _skip_quality_agents_for_quiz(state):
+        state["reflection_result"] = {"status": "skipped", "reason": "structured quiz waiting for submission"}
+        state.setdefault("trace", {})["reflection"] = state["reflection_result"]
+        _record(state, "Reflection Agent", started, output="skipped for quiz")
+        return state
+
+    answer = state.get("final_answer") or ""
+    if not answer.strip():
+        state["reflection_result"] = {"status": "skipped", "reason": "empty answer"}
+        state.setdefault("trace", {})["reflection"] = state["reflection_result"]
+        _record(state, "Reflection Agent", started, output="empty answer")
+        return state
+
+    try:
+        from src.agents.reflection_agent import ReflectionAgent
+
+        state["answer_before_reflection"] = answer
+        agent = ReflectionAgent()
+        result = agent.review(
+            state.get("user_query", ""),
+            answer,
+            state.get("context", ""),
+            lambda prompt: _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 60)),
+        )
+        result["status"] = "ok"
+        improved = str(result.get("improved_answer") or "").strip()
+        if improved:
+            state["final_answer"] = improved
+        state["reflection_result"] = result
+        state.setdefault("trace", {})["reflection"] = result
+    except Exception as exc:
+        state["reflection_result"] = {"status": "error", "error": str(exc)}
+        state.setdefault("trace", {})["reflection"] = state["reflection_result"]
+        state["error"] = str(exc)
+    _record(
+        state,
+        "Reflection Agent",
+        started,
+        status="error" if (state.get("reflection_result") or {}).get("status") == "error" else "ok",
+        output=str(state.get("reflection_result", {}))[:240],
+    )
+    return state
+
+
+def critic_node(state: StudyGraphState) -> StudyGraphState:
+    """Run the adversarial quality-check agent after reflection.
+
+    The critic is stricter than reflection. It looks for hallucinations, weak
+    evidence, bad assumptions, and educational risk. It only replaces the answer
+    when risk is medium/high so low-risk answers are not churned unnecessarily.
+    """
+
+    started = perf_counter()
+    if not state.get("critic_enabled", True):
+        state["critic_result"] = {"status": "disabled"}
+        state.setdefault("trace", {})["critic"] = state["critic_result"]
+        _record(state, "Critic Agent", started, output="disabled")
+        return state
+    if _skip_quality_agents_for_quiz(state):
+        state["critic_result"] = {"status": "skipped", "reason": "structured quiz waiting for submission"}
+        state.setdefault("trace", {})["critic"] = state["critic_result"]
+        _record(state, "Critic Agent", started, output="skipped for quiz")
+        return state
+
+    answer = state.get("final_answer") or ""
+    if not answer.strip():
+        state["critic_result"] = {"status": "skipped", "reason": "empty answer"}
+        state.setdefault("trace", {})["critic"] = state["critic_result"]
+        _record(state, "Critic Agent", started, output="empty answer")
+        return state
+
+    try:
+        from src.agents.critic_agent import CriticAgent
+
+        state["answer_before_critic"] = answer
+        agent = CriticAgent()
+        result = agent.review(
+            state.get("user_query", ""),
+            answer,
+            state.get("context", ""),
+            lambda prompt: _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 60)),
+        )
+        result["status"] = "ok"
+        improved = str(result.get("improved_answer") or "").strip()
+        if improved and result.get("risk_level") != "low":
+            state["final_answer"] = improved
+        state["critic_result"] = result
+        state.setdefault("trace", {})["critic"] = result
+    except Exception as exc:
+        state["critic_result"] = {"status": "error", "error": str(exc)}
+        state.setdefault("trace", {})["critic"] = state["critic_result"]
+        state["error"] = str(exc)
+    _record(
+        state,
+        "Critic Agent",
+        started,
+        status="error" if (state.get("critic_result") or {}).get("status") == "error" else "ok",
+        output=str(state.get("critic_result", {}))[:240],
+    )
+    return state
+
+
 def citation_checker_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
     check = CitationCheckerTool().check(state.get("final_answer") or "", state.get("docs"), state.get("web_sources"))
@@ -1442,7 +1791,7 @@ def evaluation_node(state: StudyGraphState) -> StudyGraphState:
     if state.get("quiz") and state.get("next_action") == "await_quiz_submission" and not state.get("final_sections"):
         answer = json.dumps(state.get("quiz"), ensure_ascii=False)
     try:
-        state["evaluation"] = evaluate_response(
+        deterministic = evaluate_response(
             query=state.get("user_query", ""),
             answer=answer,
             docs=state.get("docs") or [],
@@ -1450,10 +1799,36 @@ def evaluation_node(state: StudyGraphState) -> StudyGraphState:
             mode="deterministic",
             web_sources=state.get("web_sources") or [],
         )
+        rag_bundle = RAGEvaluationService().evaluate(
+            RAGEvaluationInput(
+                query=state.get("user_query", ""),
+                answer=answer,
+                docs=state.get("docs") or [],
+                context=state.get("context") or "",
+                web_sources=state.get("web_sources") or [],
+            )
+        )
+        state["evaluation"] = {
+            "evaluation_id": deterministic.get("evaluation_id") or new_id("eval"),
+            "status": deterministic.get("status", "completed"),
+            "overall_score": deterministic.get("overall_score"),
+            "deterministic": deterministic,
+            "ragas": rag_bundle.get("ragas"),
+            "deepeval": rag_bundle.get("deepeval"),
+            "summary_scores": rag_bundle.get("summary_scores"),
+            # Backward-compatible fields used by the current sidebar and chat store.
+            "rubric": deterministic.get("rubric", {}),
+            "rubric_reasons": deterministic.get("rubric_reasons", {}),
+            "deterministic_checks": deterministic.get("deterministic_checks", []),
+            "recommendations": deterministic.get("recommendations", []),
+            "llm_judge": deterministic.get("llm_judge"),
+            "gold_standard": deterministic.get("gold_standard"),
+            "created_at": deterministic.get("created_at"),
+        }
         if state.get("quiz"):
             state["evaluation"]["quiz_valid"] = True
     except Exception as exc:
-        state["evaluation"] = {"status": "error", "error": str(exc)}
+        state["evaluation"] = {"evaluation_id": new_id("eval"), "status": "error", "error": str(exc)}
     _record(state, "Evaluation", started, output=str(state.get("evaluation", {}))[:240])
     return state
 
@@ -1464,9 +1839,19 @@ def save_trace_node(state: StudyGraphState) -> StudyGraphState:
     trace["selected_agent"] = state.get("selected_agent") or ""
     trace["retrieved_docs"] = state.get("docs") or []
     trace["tools_used"] = state.get("tools_used") or []
+    trace["planned_tool_calls"] = state.get("planned_tool_calls") or []
+    trace["tool_calls"] = state.get("tool_calls") or []
+    trace["tool_results"] = state.get("tool_results") or []
     trace["timings_ms"] = state.get("timings_ms") or {}
     trace["final_answer"] = state.get("final_answer") or ""
     trace["evaluation_result"] = state.get("evaluation")
+    trace["reflection"] = state.get("reflection_result")
+    trace["critic"] = state.get("critic_result")
+    evaluation = state.get("evaluation") or {}
+    trace["deterministic_evaluation"] = evaluation.get("deterministic", evaluation)
+    trace["ragas_evaluation"] = evaluation.get("ragas")
+    trace["deepeval_evaluation"] = evaluation.get("deepeval")
+    trace["evaluation_summary_scores"] = evaluation.get("summary_scores")
     trace["route"] = ["LangGraph", state.get("route", "")]
     trace["graph_state_summary"] = {
         "route": state.get("route"),
@@ -1480,6 +1865,15 @@ def save_trace_node(state: StudyGraphState) -> StudyGraphState:
         "task_results": state.get("task_results") or [],
         "final_sections": len(state.get("final_sections") or []),
         "is_multi_task": bool(state.get("is_multi_task")),
+        "planned_tool_calls": state.get("planned_tool_calls") or [],
+        "tool_call": state.get("tool_call"),
+        "tool_calls": state.get("tool_calls") or [],
+        "tool_results": state.get("tool_results") or [],
+        "has_tool_result": bool(state.get("tool_result")),
+        "reflection_enabled": bool(state.get("reflection_enabled")),
+        "critic_enabled": bool(state.get("critic_enabled")),
+        "has_reflection": bool(state.get("reflection_result")),
+        "has_critic": bool(state.get("critic_result")),
     }
     trace["llm"] = {
         "provider": state.get("llm_provider"),

@@ -67,9 +67,3 @@ class CalculatorTool:
         except Exception as exc:
             return {"ok": False, "expression": expression, "error": str(exc)}
         return {"ok": True, "expression": result.expression, "result": result.result}
-
-
-def calculation_needed(text: str) -> bool:
-    lowered = text.lower()
-    keywords = ["calculate", "compute", "sum", "average", "احسب", "حساب", "ناتج", "متوسط"]
-    return any(keyword in lowered for keyword in keywords) or bool(extract_expression(text))

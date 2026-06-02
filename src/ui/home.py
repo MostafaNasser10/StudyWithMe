@@ -4,7 +4,6 @@ import base64
 from pathlib import Path
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 LOGO_PATH = Path("assets") / "logo.png"
@@ -117,7 +116,7 @@ def render_home_page() -> None:
         unsafe_allow_html=True,
     )
 
-    components.html(_workflow_visual_html(), height=520, scrolling=False)
+    st.markdown(_workflow_visual_markup(), unsafe_allow_html=True)
 
     st.markdown(
         """
@@ -152,6 +151,37 @@ def render_home_page() -> None:
         """,
         unsafe_allow_html=True,
     )
+
+def _workflow_visual_markup() -> str:
+    return """
+    <div class="home-shell">
+        <div class="workflow-canvas">
+            <div class="flow-card flow-input">
+                <span>Input</span>
+                <b dir="rtl">اشرح المحاضرة ثم اختبرني</b>
+                <p class="home-caption">One prompt can become several study tasks.</p>
+            </div>
+            <div class="flow-engine">
+                <div class="packet packet-one"></div>
+                <div class="packet packet-two"></div>
+                <div class="packet packet-three"></div>
+                <div class="engine-ring"></div>
+                <div class="engine-core">LangGraph</div>
+                <div class="engine-node engine-router">Router</div>
+                <div class="engine-node engine-docs">Docs</div>
+                <div class="engine-node engine-tutor">Tutor</div>
+                <div class="engine-node engine-quiz">Quiz</div>
+                <div class="engine-node engine-eval">Eval</div>
+            </div>
+            <div class="flow-card flow-output">
+                <span>Output</span>
+                <b dir="rtl">شرح عربي + مصادر + اختبار</b>
+                <div class="output-preview"><em></em><em></em><em></em></div>
+                <div class="quiz-preview"><i>A</i><i>B</i><i>C</i><i>D</i></div>
+            </div>
+        </div>
+    </div>
+    """
 
 
 def _workflow_visual_html() -> str:

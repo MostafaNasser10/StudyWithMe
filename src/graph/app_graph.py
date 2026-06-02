@@ -12,20 +12,22 @@ from src.graph.edges import after_retrieve_for_answer, after_retrieve_for_quiz, 
 from src.graph.nodes import (
     arabic_guard_node,
     build_prompt_node,
-    calculator_node,
     citation_checker_node,
     collect_task_output_node,
+    critic_node,
     enable_langsmith_if_configured,
     evaluation_node,
     final_composer_node,
     quiz_feedback_node,
     quiz_generation_node,
+    reflection_node,
     retrieve_docs_node,
     router_node,
     save_trace_node,
     study_plan_node,
     summary_node,
     task_dispatcher_node,
+    tool_calling_node,
     tutor_answer_node,
     web_search_node,
 )
@@ -44,6 +46,10 @@ def _initial_state(initial_state: StudyGraphState) -> StudyGraphState:
         "context": "",
         "web_sources": [],
         "tools_used": [],
+        "tool_call": None,
+        "tool_result": None,
+        "tool_calls": [],
+        "tool_results": [],
         "tasks": [],
         "current_task_index": 0,
         "task_outputs": {},
@@ -54,6 +60,13 @@ def _initial_state(initial_state: StudyGraphState) -> StudyGraphState:
         "needs_documents": False,
         "needs_web": False,
         "answer_style": "direct",
+        "planned_tool_calls": [],
+        "reflection_enabled": True,
+        "critic_enabled": True,
+        "reflection_result": None,
+        "critic_result": None,
+        "answer_before_reflection": None,
+        "answer_before_critic": None,
         "trace": {},
         "timings_ms": {},
         "error": None,
@@ -74,10 +87,10 @@ def build_graph():
     graph = StateGraph(StudyGraphState)
 
     graph.add_node("router", router_node)
+    graph.add_node("tool_calling", tool_calling_node)
     graph.add_node("task_dispatcher", task_dispatcher_node)
     graph.add_node("collect_task_output", collect_task_output_node)
     graph.add_node("final_composer", final_composer_node)
-    graph.add_node("calculator", calculator_node)
     graph.add_node("retrieve_docs", retrieve_docs_node)
     graph.add_node("web_search", web_search_node)
     graph.add_node("build_prompt", build_prompt_node)
@@ -87,27 +100,32 @@ def build_graph():
     graph.add_node("quiz_feedback", quiz_feedback_node)
     graph.add_node("study_plan", study_plan_node)
     graph.add_node("arabic_guard", arabic_guard_node)
+    graph.add_node("reflection", reflection_node)
+    graph.add_node("critic", critic_node)
     graph.add_node("citation_checker", citation_checker_node)
     graph.add_node("evaluation", evaluation_node)
     graph.add_node("save_trace", save_trace_node)
 
     graph.set_entry_point("router")
+    graph.add_edge("router", "tool_calling")
     graph.add_conditional_edges(
-        "router",
+        "tool_calling",
         route_after_router,
         {
-            "calculator": "calculator",
             "multi_task": "task_dispatcher",
             "task_dispatcher": "task_dispatcher",
             "retrieve_docs": "retrieve_docs",
+            "build_prompt": "build_prompt",
             "tutor_rag": "retrieve_docs",
             "summary": "retrieve_docs",
             "quiz_generate": "retrieve_docs",
+            "quiz_generation": "quiz_generation",
             "feedback": "retrieve_docs",
             "study_plan": "retrieve_docs",
+            "study_plan_direct": "study_plan",
             "web_search": "web_search",
             "documents_plus_web": "retrieve_docs",
-            "clarify": "evaluation",
+            "clarify": "save_trace",
         },
     )
 
@@ -116,11 +134,9 @@ def build_graph():
         "quiz_generation": "quiz_generation",
         "study_plan": "study_plan",
         "web_search": "web_search",
-        "calculator": "calculator",
         "quiz_feedback": "quiz_feedback",
         "final_composer": "final_composer",
     })
-    graph.add_conditional_edges("calculator", _after_task_node, {"collect_task_output": "collect_task_output", "evaluation": "evaluation"})
     graph.add_conditional_edges(
         "retrieve_docs",
         _after_retrieve,
@@ -141,13 +157,15 @@ def build_graph():
     graph.add_conditional_edges("build_prompt", _after_build_prompt, {"summary": "summary", "tutor_answer": "tutor_answer"})
     graph.add_conditional_edges("summary", _after_task_node, {"collect_task_output": "collect_task_output", "arabic_guard": "arabic_guard"})
     graph.add_conditional_edges("tutor_answer", _after_task_node, {"collect_task_output": "collect_task_output", "arabic_guard": "arabic_guard"})
-    graph.add_conditional_edges("quiz_generation", _after_task_node, {"collect_task_output": "collect_task_output", "evaluation": "evaluation"})
+    graph.add_conditional_edges("quiz_generation", _after_task_node, {"collect_task_output": "collect_task_output", "save_trace": "save_trace"})
     graph.add_conditional_edges("quiz_feedback", _after_task_node, {"collect_task_output": "collect_task_output", "arabic_guard": "arabic_guard"})
     graph.add_conditional_edges("study_plan", _after_task_node, {"collect_task_output": "collect_task_output", "arabic_guard": "arabic_guard"})
     graph.add_edge("collect_task_output", "task_dispatcher")
     graph.add_edge("final_composer", "arabic_guard")
-    graph.add_conditional_edges("arabic_guard", _after_guard, {"quiz_generation": "quiz_generation", "citation_checker": "citation_checker"})
-    graph.add_edge("citation_checker", "evaluation")
+    graph.add_conditional_edges("arabic_guard", _after_guard, {"quiz_generation": "quiz_generation", "reflection": "reflection"})
+    graph.add_edge("reflection", "critic")
+    graph.add_edge("critic", "citation_checker")
+    graph.add_edge("citation_checker", "save_trace")
     graph.add_edge("evaluation", "save_trace")
     graph.add_edge("save_trace", END)
 
@@ -167,6 +185,8 @@ def _after_retrieve(state: StudyGraphState) -> str:
         return "task_dispatcher"
     if state.get("next_action") == "final":
         return "arabic_guard"
+    if route in {"tutor_rag", "summary", "feedback"} and state.get("needs_web") and not state.get("web_sources"):
+        return "web_search"
     if route == "documents_plus_web":
         return "web_search"
     if route == "quiz_generate":
@@ -199,20 +219,23 @@ def _after_build_prompt(state: StudyGraphState) -> str:
 def _after_task_node(state: StudyGraphState) -> str:
     if state.get("route") == "multi_task":
         return "collect_task_output"
-    if state.get("route") in {"quiz_generate", "calculator"}:
-        return "evaluation"
+    if state.get("route") == "quiz_generate":
+        return "save_trace"
     return "arabic_guard"
 
 
 def _after_guard(state: StudyGraphState) -> str:
-    if state.get("route") == "multi_task":
-        return "citation_checker"
-    return "citation_checker"
+    return "reflection"
 
 
 def run_study_graph(initial_state: StudyGraphState) -> StudyGraphState:
     state = _initial_state(initial_state)
     return build_graph().invoke(state)
+
+
+def evaluate_completed_state(state: StudyGraphState) -> StudyGraphState:
+    evaluated = evaluation_node(dict(state))
+    return save_trace_node(evaluated)
 
 
 def stream_study_graph(initial_state: StudyGraphState):

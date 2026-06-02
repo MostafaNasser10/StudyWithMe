@@ -16,3 +16,6 @@ numpy
 torchvision
 python-docx
 docx2txt
+ragas
+deepeval
+datasets

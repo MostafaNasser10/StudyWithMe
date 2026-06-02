@@ -11,8 +11,6 @@ def main() -> None:
     apply_styles()
     init_session_state()
 
-    store = get_store()
-
     if st.session_state.page == "Home":
         top_left, top_right = st.columns([0.82, 0.18])
         with top_right:
@@ -26,6 +24,7 @@ def main() -> None:
     from src.ui.sidebar_left import render_left_sidebar
     from src.ui.sidebar_right import render_right_sidebar
 
+    store = get_store()
     render_left_sidebar(store)
 
     chat = store.ensure_chat(st.session_state.active_chat_id)

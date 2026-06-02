@@ -8,9 +8,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from src.chat.chat_store import ChatStore
-from src.config import MODEL_PROFILES, SOURCE_SCOPES
-from src.graph.app_graph import run_study_graph, stream_study_graph
-from src.llm import model_is_configured, resolve_model_profile
+from src.config import MODEL_PROFILES, OPENAI_API_KEY, SOURCE_SCOPES
 from src.tools.quiz_grading_tool import QuizGradingTool
 from src.ui.components import safe_text
 
@@ -19,6 +17,7 @@ CHAT_MESSAGE_RENDER_LIMIT = int(os.getenv("CHAT_MESSAGE_RENDER_LIMIT", "30"))
 
 STAGE_LABELS = {
     "router": "Planning requested tasks",
+    "tool_calling": "LLM selecting function tools",
     "task_dispatcher": "Selecting next task",
     "collect_task_output": "Saving task output",
     "final_composer": "Composing final study response",
@@ -31,10 +30,11 @@ STAGE_LABELS = {
     "quiz_feedback": "Grading quiz and building feedback",
     "study_plan": "Building study plan",
     "arabic_guard": "Checking Arabic output",
+    "reflection": "Running reflection agent",
+    "critic": "Running critic agent",
     "citation_checker": "Checking sources and citations",
-    "evaluation": "Running deterministic evaluation",
+    "evaluation": "Running RAG evaluation",
     "save_trace": "Saving trace state",
-    "calculator": "Running calculator",
 }
 
 
@@ -50,6 +50,8 @@ def _initial_graph_state(
         "source_scope": st.session_state.source_scope,
         "web_enabled": st.session_state.web_search_enabled,
         "model_profile": st.session_state.model_profile,
+        "reflection_enabled": bool(st.session_state.reflection_enabled),
+        "critic_enabled": bool(st.session_state.critic_enabled),
         "quiz": quiz,
         "user_answers": user_answers,
     }
@@ -58,6 +60,8 @@ def _initial_graph_state(
 def _next_stage(last_node: str, state: dict[str, Any]) -> str:
     route = state.get("route")
     if last_node == "router":
+        return "LLM selecting function tools"
+    if last_node == "tool_calling":
         if route == "multi_task":
             if state.get("needs_documents"):
                 return "Searching document index and embeddings"
@@ -65,7 +69,6 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
                 return "Calling web search tool"
             return "Selecting next task"
         return {
-            "calculator": "Running calculator",
             "clarify": "Preparing clarification",
             "web_search": "Calling web search tool",
             "study_plan": "Searching document index and embeddings",
@@ -84,7 +87,6 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
             "quiz_generate": "Generating structured quiz JSON",
             "study_plan": "Building study plan",
             "web_search": "Calling web search tool",
-            "calculator": "Running calculator",
             "quiz_feedback": "Grading submitted quiz",
         }.get(task_type, "Building agent prompt")
     if last_node == "collect_task_output":
@@ -110,9 +112,13 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
     if last_node in {"tutor_answer", "summary", "study_plan", "quiz_feedback"}:
         return "Checking Arabic output"
     if last_node == "arabic_guard":
+        return "Running reflection agent"
+    if last_node == "reflection":
+        return "Running critic agent"
+    if last_node == "critic":
         return "Checking sources and citations"
     if last_node == "citation_checker":
-        return "Running deterministic evaluation"
+        return "Saving trace state"
     if last_node == "evaluation":
         return "Saving trace state"
     return "Working"
@@ -124,6 +130,7 @@ def _render_runtime_status(placeholder, started: float, last_node: str, state: d
     current = _next_stage(last_node, state)
     docs = len(state.get("docs") or [])
     tools = ", ".join(state.get("tools_used") or ["none"])
+    tool_calls = state.get("tool_calls") or []
     route = state.get("route") or "pending"
     model_label = f"{state.get('llm_provider', 'llm')}:{state.get('llm_model', 'pending')}"
     error = state.get("error")
@@ -137,6 +144,14 @@ def _render_runtime_status(placeholder, started: float, last_node: str, state: d
             marker = "done" if idx < current_task_index else ("now" if idx == current_task_index else "next")
             rows.append(f"<span class='chat-meta'>{idx + 1}. {safe_text(task.get('title') or task.get('type'))} · {marker}</span>")
         task_lines = "<div class='runtime-task-list'>" + "<br>".join(rows) + "</div>"
+    function_lines = ""
+    if tool_calls:
+        rows = []
+        for call in tool_calls:
+            name = call.get("tool_name", "none")
+            reason = call.get("reasoning", "")
+            rows.append(f"<span class='chat-meta'>Function: {safe_text(name)} · {safe_text(reason)}</span>")
+        function_lines = "<div class='runtime-task-list'>" + "<br>".join(rows) + "</div>"
     placeholder.markdown(
         f"""
         <div class="trace-step">
@@ -146,6 +161,7 @@ def _render_runtime_status(placeholder, started: float, last_node: str, state: d
             <span class="chat-meta">Completed: {safe_text(completed)}</span><br>
             <span class="chat-meta">Now: {safe_text(current)}</span>
             {task_lines}
+            {function_lines}
             {error_line}
         </div>
         """,
@@ -181,10 +197,9 @@ def _scroll_chat_to_bottom() -> None:
 
 def _answer_stream(answer: str):
     text = answer or ""
-    for idx in range(0, len(text), 36):
-        yield text[idx : idx + 36]
-        _scroll_chat_to_bottom()
-        sleep(0.018)
+    for idx in range(0, len(text), 90):
+        yield text[idx : idx + 90]
+        sleep(0.008)
 
 
 def _stream_answer_preview(answer: str) -> str:
@@ -209,6 +224,8 @@ def _invoke_graph(
     user_answers: dict[str, str] | None = None,
     progress_placeholder=None,
 ) -> dict[str, Any]:
+    from src.graph.app_graph import run_study_graph, stream_study_graph
+
     initial_state = _initial_graph_state(chat, query, quiz=quiz, user_answers=user_answers)
     if progress_placeholder is not None:
         started = perf_counter()
@@ -248,8 +265,92 @@ def _persist_graph_result(
         "route": state.get("route"),
         "selected_agent": state.get("selected_agent"),
         "tools_used": state.get("tools_used"),
+        "tool_calls": state.get("tool_calls") or [],
+        "tool_results": state.get("tool_results") or [],
         "prompt": "[hidden]",
     }
+
+
+def _attach_deferred_evaluation(chat_id: str, store: ChatStore, state: dict[str, Any]) -> None:
+    evaluation = state.get("evaluation")
+    trace = state.get("trace") or {}
+    if not evaluation or not evaluation.get("evaluation_id"):
+        return
+
+    chat = store.ensure_chat(chat_id)
+    evaluations = chat.setdefault("evaluations", [])
+    if not any(item.get("evaluation_id") == evaluation["evaluation_id"] for item in evaluations):
+        evaluations.append(evaluation)
+
+    prompt_id = trace.get("prompt_id")
+    traces = chat.setdefault("traces", [])
+    replaced = False
+    for idx, item in enumerate(traces):
+        if prompt_id and item.get("prompt_id") == prompt_id:
+            traces[idx] = trace
+            replaced = True
+            break
+    if not replaced and trace:
+        traces.append(trace)
+
+    for message in reversed(chat.get("messages") or []):
+        if message.get("role") == "assistant" and (not prompt_id or message.get("trace_id") == prompt_id):
+            message["evaluation_id"] = evaluation["evaluation_id"]
+            break
+
+    store.save_chat(chat)
+    st.session_state.last_trace = trace
+    st.session_state.last_evaluation = evaluation
+
+
+def _trace_for_message(chat: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    trace_id = message.get("trace_id")
+    if not trace_id:
+        return {}
+    for trace in reversed(chat.get("traces") or []):
+        if trace.get("prompt_id") == trace_id:
+            return trace
+    return {}
+
+
+def _state_from_message_for_evaluation(chat: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    trace = _trace_for_message(chat, message)
+    docs = message.get("docs") or trace.get("retrieved_docs") or []
+    context = "\n\n".join(str(doc.get("snippet") or "") for doc in docs if doc.get("snippet"))
+    route = trace.get("route") or []
+    return {
+        "chat_id": chat["chat_id"],
+        "user_query": trace.get("user_query") or "",
+        "final_answer": message.get("content") or trace.get("final_answer") or "",
+        "docs": docs,
+        "context": context,
+        "web_sources": trace.get("web_sources") or [],
+        "tools_used": trace.get("tools_used") or [],
+        "trace": trace,
+        "timings_ms": trace.get("timings_ms") or {},
+        "selected_agent": trace.get("selected_agent"),
+        "route": route[-1] if isinstance(route, list) and route else trace.get("route", ""),
+    }
+
+
+def _render_message_evaluation_action(chat: dict[str, Any], store: ChatStore, message: dict[str, Any]) -> None:
+    if message.get("role") != "assistant" or not message.get("trace_id"):
+        return
+    if message.get("evaluation_id"):
+        st.caption("RAG evaluation ready in the right sidebar.")
+        return
+
+    button_key = f"rag_eval_{message.get('message_id')}"
+    if not st.button("▣ Evaluate RAG", key=button_key, type="secondary"):
+        return
+
+    with st.status("Running RAG evaluations...", expanded=True):
+        from src.graph.app_graph import evaluate_completed_state
+
+        state = _state_from_message_for_evaluation(chat, message)
+        evaluated_state = evaluate_completed_state(state)
+        _attach_deferred_evaluation(chat["chat_id"], store, evaluated_state)
+    st.rerun()
 
 
 def _answer_label(answer: str) -> str:
@@ -379,6 +480,17 @@ def _render_active_quiz(chat: dict, store: ChatStore) -> None:
     st.rerun()
 
 
+def _sync_active_quiz_after_graph(chat_id: str, store: ChatStore, state: dict[str, Any]) -> dict[str, Any]:
+    metadata: dict[str, Any] = {}
+    quiz = state.get("quiz")
+    if quiz:
+        metadata["quiz"] = quiz
+        store.update_chat(chat_id, active_quiz=quiz)
+    else:
+        store.update_chat(chat_id, active_quiz=None)
+    return metadata
+
+
 def render_chat_view(chat: dict, store: ChatStore) -> None:
     chat_title = safe_text(chat.get("title", "Study session"))
     st.markdown(
@@ -401,10 +513,12 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
     )
 
     st.markdown("<div class='control-strip'>", unsafe_allow_html=True)
+    st.session_state.setdefault("reflection_enabled", True)
+    st.session_state.setdefault("critic_enabled", True)
     current_scope = st.session_state.source_scope if st.session_state.source_scope in SOURCE_SCOPES else SOURCE_SCOPES[0]
     model_keys = list(MODEL_PROFILES.keys())
     current_model = st.session_state.model_profile if st.session_state.model_profile in MODEL_PROFILES else model_keys[0]
-    source_col, model_col = st.columns([0.46, 0.54])
+    source_col, model_col, reflection_col, critic_col = st.columns([0.3, 0.34, 0.18, 0.18])
     with source_col:
         st.session_state.source_scope = st.selectbox("Source mode", SOURCE_SCOPES, index=SOURCE_SCOPES.index(current_scope))
     with model_col:
@@ -414,10 +528,19 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
             index=model_keys.index(current_model),
             format_func=lambda key: MODEL_PROFILES[key]["label"],
         )
-        selected_settings = resolve_model_profile(profile=st.session_state.model_profile)
-        configured, config_message = model_is_configured(selected_settings["provider"])
-        if not configured:
-            st.caption(config_message)
+        selected_settings = MODEL_PROFILES.get(st.session_state.model_profile, {})
+        if selected_settings.get("provider") == "openai" and not OPENAI_API_KEY:
+            st.caption("OPENAI_API_KEY is missing. Add it to your environment to use OpenAI gpt-4o-mini.")
+    with reflection_col:
+        st.session_state.reflection_enabled = st.toggle(
+            "Reflection Agent",
+            value=bool(st.session_state.reflection_enabled),
+        )
+    with critic_col:
+        st.session_state.critic_enabled = st.toggle(
+            "Critic Agent",
+            value=bool(st.session_state.critic_enabled),
+        )
     st.session_state.web_search_enabled = st.session_state.source_scope in {"Web only", "Documents + Web"}
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -432,6 +555,7 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
                 content = message.get("content", "")
                 if message.get("role") == "assistant":
                     st.markdown(content)
+                    _render_message_evaluation_action(chat, store, message)
                 else:
                     st.markdown(content)
 
@@ -463,10 +587,7 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
             _stream_answer_preview(state.get("final_answer") or "")
         _scroll_chat_to_bottom()
 
-    metadata = {}
-    if state.get("quiz"):
-        metadata["quiz"] = state.get("quiz")
-        store.update_chat(chat["chat_id"], active_quiz=state.get("quiz"))
+    metadata = _sync_active_quiz_after_graph(chat["chat_id"], store, state)
 
     _persist_graph_result(chat, store, state, response_time_ms, metadata=metadata or None)
     if state.get("quiz"):

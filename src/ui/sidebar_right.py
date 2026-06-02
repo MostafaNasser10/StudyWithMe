@@ -50,6 +50,73 @@ def _current_process(chat: dict) -> tuple[dict | None, dict | None]:
     return trace, evaluation
 
 
+def _metric_color(value: float | None, lower_is_better: bool = False) -> str:
+    if value is None:
+        return "#64748b"
+    score = 1 - value if lower_is_better else value
+    if score >= 0.8:
+        return "#15803d"
+    if score >= 0.55:
+        return "#b45309"
+    return "#b91c1c"
+
+
+def _metric_text(value) -> str:
+    if value is None:
+        return "N/A"
+    try:
+        return f"{round(float(value) * 100)}%"
+    except Exception:
+        return "N/A"
+
+
+def _render_metric_window(title: str, result: dict | None, metrics: list[tuple[str, str, bool]]) -> None:
+    st.markdown(f"<div class='section-title'>{safe_text(title)}</div>", unsafe_allow_html=True)
+    if not result:
+        st.caption("No metrics recorded.")
+        return
+    status = result.get("status", "unknown")
+    if status != "ok":
+        st.caption(f"Status: {status}")
+        message = result.get("message") or result.get("error")
+        if message:
+            st.caption(str(message)[:220])
+        return
+
+    for key, label, lower_is_better in metrics:
+        value = result.get(key)
+        color = _metric_color(float(value) if isinstance(value, (int, float)) else None, lower_is_better)
+        st.markdown(
+            f"""
+            <div class="trace-step">
+                <b>{safe_text(label)}</b>
+                <span style="float:right;color:{color};font-weight:700">{safe_text(_metric_text(value))}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        reason = (result.get("reasons") or {}).get(key)
+        evidence = (result.get("evidence") or {}).get(key)
+        if reason or evidence:
+            with st.expander(f"Why {label}?"):
+                if reason:
+                    st.caption(reason)
+                if isinstance(evidence, dict):
+                    for evidence_key, evidence_value in evidence.items():
+                        st.markdown(f"**{safe_text(evidence_key.replace('_', ' ').title())}**")
+                        if isinstance(evidence_value, list):
+                            if evidence_value:
+                                for item in evidence_value:
+                                    st.caption(f"- {item}")
+                            else:
+                                st.caption("None detected.")
+                        else:
+                            st.caption(str(evidence_value))
+    notes = result.get("notes")
+    if notes:
+        st.caption(notes)
+
+
 def render_right_sidebar(chat: dict, store: ChatStore) -> None:
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>Uploaded files</div>", unsafe_allow_html=True)
@@ -110,8 +177,39 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
         st.caption(" -> ".join(route))
         st.write(f"Tools: {', '.join(trace.get('tools_used') or ['None'])}")
         st.write(f"Retrieved docs: {len(trace.get('retrieved_docs') or [])}")
+        tool_calls = trace.get("tool_calls") or (trace.get("graph_state_summary") or {}).get("tool_calls") or []
+        if tool_calls:
+            st.caption("LLM function calls")
+            for call in tool_calls:
+                st.caption(f"- {call.get('tool_name', 'none')}: {call.get('reasoning', '')}")
     else:
         st.caption("Ask a question to see routing.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>Reflection / Critic</div>", unsafe_allow_html=True)
+    if trace:
+        summary = trace.get("graph_state_summary") or {}
+        reflection = trace.get("reflection") or {}
+        critic = trace.get("critic") or {}
+        st.caption(f"Reflection: {'Enabled' if summary.get('reflection_enabled') else 'Disabled'}")
+        if reflection:
+            st.caption(f"Reflection status: {reflection.get('status', 'ok')}")
+            if reflection.get("passed") is not None:
+                st.caption(f"Reflection passed: {reflection.get('passed')}")
+            for issue in (reflection.get("issues") or [])[:3]:
+                st.caption(f"- {issue}")
+        st.caption(f"Critic: {'Enabled' if summary.get('critic_enabled') else 'Disabled'}")
+        if critic:
+            st.caption(f"Critic status: {critic.get('status', 'ok')}")
+            if critic.get("risk_level"):
+                st.caption(f"Risk level: {critic.get('risk_level')}")
+            if critic.get("passed") is not None:
+                st.caption(f"Critic passed: {critic.get('passed')}")
+            for item in (critic.get("criticism") or [])[:3]:
+                st.caption(f"- {item}")
+    else:
+        st.caption("No reflection or critic trace yet.")
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
@@ -131,8 +229,9 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
     st.markdown("<div class='section-title'>Evaluation</div>", unsafe_allow_html=True)
     if evaluation:
         st.metric("Score", evaluation.get("overall_score", "N/A"))
-        rubric = evaluation.get("rubric", {})
-        reasons = evaluation.get("rubric_reasons", {})
+        deterministic = evaluation.get("deterministic") if isinstance(evaluation.get("deterministic"), dict) else evaluation
+        rubric = deterministic.get("rubric", {})
+        reasons = deterministic.get("rubric_reasons", {})
         rows = [
             {
                 "Criterion": name,
@@ -148,16 +247,44 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
                 st.caption(row["Reason"])
         if evaluation.get("recommendations"):
             st.caption("Recommendations")
-            for item in evaluation["recommendations"]:
+            for item in deterministic.get("recommendations", []):
                 st.caption(f"- {item}")
-        for check in evaluation.get("deterministic_checks", []):
+        for check in deterministic.get("deterministic_checks", []):
             st.caption(f"{check['name']}: {'passed' if check.get('passed') else 'failed'}")
-        if evaluation.get("llm_judge"):
-            judge = evaluation["llm_judge"]
+        if deterministic.get("llm_judge"):
+            judge = deterministic["llm_judge"]
             judge_text = judge.get("status") or judge.get("message") or judge.get("error") or judge.get("comment", "")
             st.caption(f"Judge: {judge.get('mode')} - {judge_text[:140]}")
     else:
         st.caption("No evaluation yet.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>RAG Evaluations</div>", unsafe_allow_html=True)
+    if evaluation:
+        _render_metric_window(
+            "RAGAS",
+            evaluation.get("ragas"),
+            [
+                ("faithfulness", "Faithfulness", False),
+                ("answer_relevancy", "Answer Relevancy", False),
+                ("context_precision", "Context Precision", False),
+                ("context_recall", "Context Recall", False),
+            ],
+        )
+        st.divider()
+        _render_metric_window(
+            "DeepEval",
+            evaluation.get("deepeval"),
+            [
+                ("correctness", "Correctness", False),
+                ("relevance", "Relevance", False),
+                ("hallucination", "Hallucination", True),
+                ("helpfulness", "Helpfulness", False),
+            ],
+        )
+    else:
+        st.caption("Ask a question to generate RAG evaluation metrics.")
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)

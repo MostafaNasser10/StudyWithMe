@@ -4,8 +4,35 @@ from src.graph.state import StudyGraphState
 
 
 def route_after_router(state: StudyGraphState) -> str:
+    if state.get("next_action") == "final":
+        return "clarify"
+    if (
+        state.get("route") in {"tutor_rag", "summary", "feedback"}
+        and state.get("needs_web")
+        and (state.get("docs") or state.get("context"))
+        and not state.get("web_sources")
+    ):
+        return "web_search"
+    if state.get("docs") and state.get("route") in {"tutor_rag", "summary"}:
+        return "build_prompt"
+    if state.get("docs") and state.get("route") == "quiz_generate":
+        return "quiz_generation"
+    if state.get("docs") and state.get("route") == "study_plan":
+        return "study_plan_direct"
+    if state.get("route") == "documents_plus_web":
+        if state.get("web_sources"):
+            return "build_prompt"
+        if state.get("docs") or state.get("context"):
+            return "web_search"
+        return "retrieve_docs"
+    if state.get("route") in {"tutor_rag", "summary", "feedback"} and not state.get("needs_documents"):
+        return "build_prompt"
+    if state.get("route") == "quiz_generate" and not state.get("needs_documents"):
+        return "quiz_generation"
+    if state.get("route") == "study_plan" and not state.get("needs_documents"):
+        return "study_plan_direct"
     if state.get("route") == "multi_task":
-        if state.get("needs_documents"):
+        if state.get("needs_documents") and not (state.get("docs") or state.get("context")):
             return "retrieve_docs"
         tasks = state.get("tasks") or []
         first_task_type = (tasks[0] or {}).get("type") if tasks else None
@@ -47,7 +74,6 @@ def route_next_task(state: StudyGraphState) -> str:
         "quiz_generate": "quiz_generation",
         "study_plan": "study_plan",
         "web_search": "web_search",
-        "calculator": "calculator",
         "quiz_feedback": "quiz_feedback",
         "feedback": "build_prompt",
         "clarify": "final_composer",
