@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import os
+from threading import Thread
 from time import perf_counter, sleep
 from typing import Any
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from src.chat.chat_store import ChatStore
-from src.config import MODEL_PROFILES, OPENAI_API_KEY, SOURCE_SCOPES
+from src.config import DEFAULT_BM25_SEARCH_ENABLED, ENABLE_DEEPEVAL_EVAL, ENABLE_RAGAS_EVAL, MODEL_PROFILES, OPENAI_API_KEY, SOURCE_SCOPES
 from src.tools.quiz_grading_tool import QuizGradingTool
 from src.ui.components import safe_text
 
@@ -19,9 +19,10 @@ STAGE_LABELS = {
     "router": "Planning requested tasks",
     "tool_calling": "LLM selecting function tools",
     "task_dispatcher": "Selecting next task",
+    "parallel_agents": "Running planned agents in parallel",
     "collect_task_output": "Saving task output",
     "final_composer": "Composing final study response",
-    "retrieve_docs": "Searching document index and embeddings",
+    "retrieve_docs": "Searching vector/BM25/web in parallel",
     "web_search": "Calling web search tool",
     "build_prompt": "Building agent prompt",
     "tutor_answer": "Calling selected LLM",
@@ -49,6 +50,7 @@ def _initial_graph_state(
         "user_query": query,
         "source_scope": st.session_state.source_scope,
         "web_enabled": st.session_state.web_search_enabled,
+        "bm25_enabled": bool(st.session_state.bm25_search_enabled),
         "model_profile": st.session_state.model_profile,
         "reflection_enabled": bool(st.session_state.reflection_enabled),
         "critic_enabled": bool(st.session_state.critic_enabled),
@@ -64,17 +66,17 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
     if last_node == "tool_calling":
         if route == "multi_task":
             if state.get("needs_documents"):
-                return "Searching document index and embeddings"
+                return "Searching vector/BM25/web in parallel"
             if state.get("needs_web"):
                 return "Calling web search tool"
             return "Selecting next task"
         return {
             "clarify": "Preparing clarification",
             "web_search": "Calling web search tool",
-            "study_plan": "Searching document index and embeddings",
-            "quiz_generate": "Searching document index and embeddings",
-            "documents_plus_web": "Searching document index and embeddings",
-        }.get(route, "Searching document index and embeddings")
+            "study_plan": "Searching vector/BM25/web in parallel",
+            "quiz_generate": "Searching vector/BM25/web in parallel",
+            "documents_plus_web": "Searching vector/BM25/web in parallel",
+        }.get(route, "Searching vector/BM25/web in parallel")
     if last_node == "task_dispatcher":
         tasks = state.get("tasks") or []
         idx = int(state.get("current_task_index") or 0)
@@ -89,6 +91,8 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
             "web_search": "Calling web search tool",
             "quiz_feedback": "Grading submitted quiz",
         }.get(task_type, "Building agent prompt")
+    if last_node == "parallel_agents":
+        return "Composing final study response"
     if last_node == "collect_task_output":
         return "Selecting next task"
     if last_node == "final_composer":
@@ -101,7 +105,7 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
         if route == "study_plan":
             return "Building study plan"
         if route == "documents_plus_web":
-            return "Calling web search tool"
+            return "Building agent prompt" if state.get("web_sources") else "Calling web search tool"
         return "Building agent prompt"
     if last_node == "web_search":
         if route == "multi_task":
@@ -118,7 +122,7 @@ def _next_stage(last_node: str, state: dict[str, Any]) -> str:
     if last_node == "critic":
         return "Checking sources and citations"
     if last_node == "citation_checker":
-        return "Saving trace state"
+        return "Running RAG evaluation"
     if last_node == "evaluation":
         return "Saving trace state"
     return "Working"
@@ -152,6 +156,19 @@ def _render_runtime_status(placeholder, started: float, last_node: str, state: d
             reason = call.get("reasoning", "")
             rows.append(f"<span class='chat-meta'>Function: {safe_text(name)} · {safe_text(reason)}</span>")
         function_lines = "<div class='runtime-task-list'>" + "<br>".join(rows) + "</div>"
+    retrieval = state.get("retrieval_breakdown") or {}
+    retrieval_lines = ""
+    if retrieval:
+        doc_part = retrieval.get("document_search") or {}
+        counts = doc_part.get("counts") or {}
+        web_part = retrieval.get("web_search") or {}
+        retrieval_lines = (
+            "<div class='runtime-task-list'>"
+            f"<span class='chat-meta'>Parallel retrieval: vector={safe_text(str(counts.get('vector', 0)))}"
+            f" | BM25={safe_text(str(counts.get('bm25', 0)))}"
+            f" | web={safe_text(str(web_part.get('status', 'skipped')))}</span>"
+            "</div>"
+        )
     placeholder.markdown(
         f"""
         <div class="trace-step">
@@ -162,6 +179,7 @@ def _render_runtime_status(placeholder, started: float, last_node: str, state: d
             <span class="chat-meta">Now: {safe_text(current)}</span>
             {task_lines}
             {function_lines}
+            {retrieval_lines}
             {error_line}
         </div>
         """,
@@ -170,7 +188,7 @@ def _render_runtime_status(placeholder, started: float, last_node: str, state: d
 
 
 def _scroll_chat_to_bottom() -> None:
-    components.html(
+    st.iframe(
         """
         <script>
         const doc = window.parent.document;
@@ -191,7 +209,7 @@ def _scroll_chat_to_bottom() -> None:
         }
         </script>
         """,
-        height=0,
+        height=1,
     )
 
 
@@ -313,6 +331,16 @@ def _trace_for_message(chat: dict[str, Any], message: dict[str, Any]) -> dict[st
     return {}
 
 
+def _evaluation_for_message(chat: dict[str, Any], message: dict[str, Any]) -> dict[str, Any] | None:
+    evaluation_id = message.get("evaluation_id")
+    if not evaluation_id:
+        return None
+    for evaluation in reversed(chat.get("evaluations") or []):
+        if evaluation.get("evaluation_id") == evaluation_id:
+            return evaluation
+    return None
+
+
 def _state_from_message_for_evaluation(chat: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     trace = _trace_for_message(chat, message)
     docs = message.get("docs") or trace.get("retrieved_docs") or []
@@ -333,23 +361,98 @@ def _state_from_message_for_evaluation(chat: dict[str, Any], message: dict[str, 
     }
 
 
+def _run_message_evaluation_with_progress(
+    chat: dict[str, Any],
+    store: ChatStore,
+    message: dict[str, Any],
+    *,
+    external_rag_eval_enabled: bool,
+) -> None:
+    from src.graph.app_graph import evaluate_completed_state
+
+    title = "Running external RAG evaluations..." if external_rag_eval_enabled else "Running RAG evaluation..."
+    steps = (
+        [
+            "Preparing saved answer and retrieved context",
+            "Running deterministic rubric checks",
+            "Calling RAGAS / DeepEval evaluators",
+            "Saving evaluation result",
+        ]
+        if external_rag_eval_enabled
+        else [
+            "Preparing saved answer and retrieved context",
+            "Running deterministic rubric checks",
+            "Marking external evaluators as manual",
+            "Saving evaluation result",
+        ]
+    )
+
+    with st.status(title, expanded=True) as status:
+        progress = st.progress(0)
+        step_text = st.empty()
+        result_box: dict[str, Any] = {}
+        error_box: dict[str, str] = {}
+
+        def worker() -> None:
+            try:
+                state = _state_from_message_for_evaluation(chat, message)
+                result_box["state"] = evaluate_completed_state(
+                    state,
+                    external_rag_eval_enabled=external_rag_eval_enabled,
+                )
+            except Exception as exc:
+                error_box["error"] = str(exc)
+
+        thread = Thread(target=worker, daemon=True)
+        started = perf_counter()
+        thread.start()
+        tick = 0
+        while thread.is_alive():
+            elapsed = perf_counter() - started
+            step_index = min(int(elapsed // 4), len(steps) - 1)
+            step_text.caption(f"{steps[step_index]}... {round(elapsed, 1)}s elapsed")
+            progress.progress(min(90, 8 + tick * 3))
+            tick += 1
+            sleep(0.25)
+        thread.join()
+
+        if error_box:
+            progress.progress(100)
+            status.update(label="Evaluation failed", state="error")
+            st.error(error_box["error"][:500])
+            return
+
+        step_text.caption(steps[-1])
+        progress.progress(100)
+        _attach_deferred_evaluation(chat["chat_id"], store, result_box["state"])
+        status.update(label="Evaluation complete", state="complete")
+
+
 def _render_message_evaluation_action(chat: dict[str, Any], store: ChatStore, message: dict[str, Any]) -> None:
     if message.get("role") != "assistant" or not message.get("trace_id"):
         return
     if message.get("evaluation_id"):
         st.caption("RAG evaluation ready in the right sidebar.")
-        return
+        evaluation = _evaluation_for_message(chat, message) or {}
+        external_enabled = ENABLE_RAGAS_EVAL or ENABLE_DEEPEVAL_EVAL
+        external_done = any(
+            (evaluation.get(name) or {}).get("status") == "ok"
+            for name in ("ragas", "deepeval")
+        )
+        if not external_enabled or external_done:
+            return
+
+        button_key = f"external_rag_eval_{message.get('message_id')}"
+        if not st.button("Run RAGAS / DeepEval", key=button_key, type="secondary"):
+            return
+        _run_message_evaluation_with_progress(chat, store, message, external_rag_eval_enabled=True)
+        st.rerun()
 
     button_key = f"rag_eval_{message.get('message_id')}"
     if not st.button("▣ Evaluate RAG", key=button_key, type="secondary"):
         return
 
-    with st.status("Running RAG evaluations...", expanded=True):
-        from src.graph.app_graph import evaluate_completed_state
-
-        state = _state_from_message_for_evaluation(chat, message)
-        evaluated_state = evaluate_completed_state(state)
-        _attach_deferred_evaluation(chat["chat_id"], store, evaluated_state)
+    _run_message_evaluation_with_progress(chat, store, message, external_rag_eval_enabled=False)
     st.rerun()
 
 
@@ -370,7 +473,7 @@ def _format_quiz_result(result: dict[str, Any]) -> str:
             f"- السؤال {idx}: {mark}. إجابتك: {item.get('user_answer') or 'بدون إجابة'}، "
             f"الإجابة الصحيحة: {item.get('correct_answer')}."
         )
-    lines.extend(["", "اضغط Review feedback إذا أردت شرحا تعليميا مفصلا للأخطاء والمفاهيم الضعيفة."])
+    lines.extend(["", "اضغط مراجعة الإجابات إذا أردت شرحا تعليميا مفصلا للأخطاء والمفاهيم الضعيفة."])
     return "\n".join(lines)
 
 
@@ -382,7 +485,7 @@ def _render_pending_quiz_feedback(chat: dict, store: ChatStore) -> None:
     if latest.get("feedback") or not latest.get("quiz_result"):
         return
 
-    if not st.button("Review feedback", type="secondary", use_container_width=True):
+    if not st.button("مراجعة الإجابات", type="secondary", width="stretch"):
         return
 
     started = perf_counter()
@@ -437,7 +540,7 @@ def _render_active_quiz(chat: dict, store: ChatStore) -> None:
             )
             answers[qid] = _answer_label(selected.split(".", 1)[0].strip())
 
-        submitted = st.form_submit_button("Submit", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("إرسال", type="primary", width="stretch")
 
     st.markdown("</div>", unsafe_allow_html=True)
     if not submitted:
@@ -491,6 +594,90 @@ def _sync_active_quiz_after_graph(chat_id: str, store: ChatStore, state: dict[st
     return metadata
 
 
+def _render_workspace_controls() -> None:
+    st.session_state.setdefault("reflection_enabled", True)
+    st.session_state.setdefault("critic_enabled", True)
+    st.session_state.setdefault("bm25_search_enabled", DEFAULT_BM25_SEARCH_ENABLED)
+
+    current_scope = st.session_state.source_scope if st.session_state.source_scope in SOURCE_SCOPES else SOURCE_SCOPES[0]
+    model_keys = list(MODEL_PROFILES.keys())
+    current_model = st.session_state.model_profile if st.session_state.model_profile in MODEL_PROFILES else model_keys[0]
+
+    st.markdown("<div class='control-strip'>", unsafe_allow_html=True)
+    st.markdown("<div class='settings-summary'>", unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <span class="settings-pill">Sources: {safe_text(current_scope)}</span>
+        <span class="settings-pill">BM25: {'On' if st.session_state.bm25_search_enabled else 'Off'}</span>
+        <span class="settings-pill">Reflection: {'On' if st.session_state.reflection_enabled else 'Off'}</span>
+        <span class="settings-pill">Critic: {'On' if st.session_state.critic_enabled else 'Off'}</span>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.session_state.setdefault("settings_panel", "Retrieval")
+    panels = ("Retrieval", "Agents", "Model")
+    tab_cols = st.columns(3, gap="medium")
+    for label, col in zip(panels, tab_cols):
+        with col:
+            selected = st.session_state.settings_panel == label
+            if st.button(
+                label,
+                key=f"settings_panel_{label.lower()}",
+                type="primary" if selected else "secondary",
+                width="stretch",
+            ):
+                st.session_state.settings_panel = label
+                st.rerun()
+
+    if st.session_state.settings_panel == "Retrieval":
+        source_col, bm25_col = st.columns([0.62, 0.38])
+        with source_col:
+            st.session_state.source_scope = st.selectbox(
+                "Source mode",
+                SOURCE_SCOPES,
+                index=SOURCE_SCOPES.index(current_scope),
+                help="Choose whether answers use uploaded files, web results, or both.",
+            )
+        with bm25_col:
+            st.session_state.bm25_search_enabled = st.toggle(
+                "Lexical BM25",
+                value=bool(st.session_state.bm25_search_enabled),
+                help="Run keyword search in parallel with vector search. Faster off; sometimes better for exact terms on.",
+            )
+
+    elif st.session_state.settings_panel == "Agents":
+        reflection_col, critic_col = st.columns(2)
+        with reflection_col:
+            st.session_state.reflection_enabled = st.toggle(
+                "Reflection agent",
+                value=bool(st.session_state.reflection_enabled),
+                help="Fast deterministic self-review is used by default.",
+            )
+        with critic_col:
+            st.session_state.critic_enabled = st.toggle(
+                "Critic agent",
+                value=bool(st.session_state.critic_enabled),
+                help="Checks risk and grounding before citation/evaluation.",
+            )
+
+    else:
+        st.session_state.model_profile = st.selectbox(
+            "Answer model",
+            model_keys,
+            index=model_keys.index(current_model),
+            format_func=lambda key: MODEL_PROFILES[key]["label"],
+            help="Controls the model used by the graph workflow.",
+        )
+        selected_settings = MODEL_PROFILES.get(st.session_state.model_profile, {})
+        if selected_settings.get("provider") == "openai" and not OPENAI_API_KEY:
+            st.caption("OPENAI_API_KEY is missing. Add it to your environment to use OpenAI gpt-4o-mini.")
+
+    st.session_state.web_search_enabled = st.session_state.source_scope in {"Web only", "Documents + Web"}
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_chat_view(chat: dict, store: ChatStore) -> None:
     chat_title = safe_text(chat.get("title", "Study session"))
     st.markdown(
@@ -512,37 +699,7 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='control-strip'>", unsafe_allow_html=True)
-    st.session_state.setdefault("reflection_enabled", True)
-    st.session_state.setdefault("critic_enabled", True)
-    current_scope = st.session_state.source_scope if st.session_state.source_scope in SOURCE_SCOPES else SOURCE_SCOPES[0]
-    model_keys = list(MODEL_PROFILES.keys())
-    current_model = st.session_state.model_profile if st.session_state.model_profile in MODEL_PROFILES else model_keys[0]
-    source_col, model_col, reflection_col, critic_col = st.columns([0.3, 0.34, 0.18, 0.18])
-    with source_col:
-        st.session_state.source_scope = st.selectbox("Source mode", SOURCE_SCOPES, index=SOURCE_SCOPES.index(current_scope))
-    with model_col:
-        st.session_state.model_profile = st.selectbox(
-            "Model",
-            model_keys,
-            index=model_keys.index(current_model),
-            format_func=lambda key: MODEL_PROFILES[key]["label"],
-        )
-        selected_settings = MODEL_PROFILES.get(st.session_state.model_profile, {})
-        if selected_settings.get("provider") == "openai" and not OPENAI_API_KEY:
-            st.caption("OPENAI_API_KEY is missing. Add it to your environment to use OpenAI gpt-4o-mini.")
-    with reflection_col:
-        st.session_state.reflection_enabled = st.toggle(
-            "Reflection Agent",
-            value=bool(st.session_state.reflection_enabled),
-        )
-    with critic_col:
-        st.session_state.critic_enabled = st.toggle(
-            "Critic Agent",
-            value=bool(st.session_state.critic_enabled),
-        )
-    st.session_state.web_search_enabled = st.session_state.source_scope in {"Web only", "Documents + Web"}
-    st.markdown("</div>", unsafe_allow_html=True)
+    _render_workspace_controls()
 
     message_area = st.container(height=620, border=False)
     with message_area:
@@ -595,7 +752,3 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
             fresh_chat = store.ensure_chat(chat["chat_id"])
             _render_active_quiz(fresh_chat, store)
             _scroll_chat_to_bottom()
-
-    # The right sidebar is rendered before the prompt runs, so refresh once
-    # after persisting to show the latest trace/evaluation for all routes.
-    st.rerun()

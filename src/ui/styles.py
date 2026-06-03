@@ -377,15 +377,107 @@ def apply_styles() -> None:
         .chat-title-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
 
         .control-strip {
-            background: #111821;
-            border: 1px solid var(--border-soft);
+            background: linear-gradient(180deg, #121a24, #0f151d);
+            border: 1px solid rgba(226, 239, 255, .22);
             border-radius: 8px;
-            padding: .75rem;
+            padding: .85rem;
+            margin-bottom: .85rem;
+            box-shadow: 0 14px 38px rgba(0,0,0,.22);
+        }
+        .settings-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            margin-bottom: .7rem;
+        }
+        .settings-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: .22rem .6rem;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: #172231;
+            color: var(--muted);
+            font-size: .78rem;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+        .control-strip [data-testid="stTabs"] [role="tablist"] {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .65rem;
+            min-height: 58px;
+            padding: .48rem;
+            border: 1px solid rgba(226, 239, 255, .18);
+            border-radius: 8px;
+            background: #0d141d;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.025);
             margin-bottom: .85rem;
         }
+        .control-strip [data-testid="stTabs"] [role="tab"] {
+            width: 100%;
+            min-height: 46px;
+            justify-content: center;
+            border: 1px solid rgba(226, 239, 255, .18);
+            border-radius: 6px;
+            padding: .52rem .9rem;
+            color: var(--text-soft);
+            font-weight: 800;
+            background: linear-gradient(180deg, #182433, #121b27);
+            box-shadow: 0 8px 20px rgba(0,0,0,.18);
+            transition: background .14s ease, border-color .14s ease, color .14s ease, transform .14s ease;
+        }
+        .control-strip [data-testid="stTabs"] [role="tab"] p {
+            color: inherit !important;
+            font-size: .95rem;
+            font-weight: 900;
+            text-align: center;
+            white-space: nowrap;
+            margin: 0;
+        }
+        .control-strip [data-testid="stTabs"] [aria-selected="true"] {
+            background: linear-gradient(180deg, #f3fbff, #bfeeff) !important;
+            border-color: #ffffff !important;
+            color: #06111d !important;
+            box-shadow: 0 10px 26px rgba(76,201,240,.28);
+        }
+        .control-strip [data-testid="stTabs"] [aria-selected="true"] p {
+            color: #06111d !important;
+        }
+        .control-strip [data-testid="stTabs"] [role="tab"]:hover {
+            border-color: rgba(255,255,255,.55);
+            background: linear-gradient(180deg, #213146, #182536);
+            transform: translateY(-1px);
+        }
 
-        .right-panel { padding: .9rem; margin-bottom: .85rem; }
-        .section-title { font-weight: 850; font-size: .95rem; margin-bottom: .5rem; color: var(--text); }
+        .right-panel {
+            padding: .95rem;
+            margin-bottom: .9rem;
+            border-color: rgba(236, 246, 255, .52) !important;
+            background: linear-gradient(180deg, #151b23, #101720);
+            box-shadow: 0 16px 42px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.035);
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+            font-weight: 850;
+            font-size: .95rem;
+            margin-bottom: .7rem;
+            color: #f8fbff;
+            padding-bottom: .48rem;
+            border-bottom: 1px solid rgba(236, 246, 255, .2);
+        }
+        .section-title::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--accent);
+            box-shadow: 0 0 14px rgba(76,201,240,.55);
+            flex: 0 0 auto;
+        }
         .file-card { background: var(--surface-2); margin-bottom: .5rem; padding: .68rem; }
         .file-name { font-size: .86rem; font-weight: 750; overflow-wrap: anywhere; color: var(--text); }
         .file-row { display: flex; justify-content: space-between; gap: .5rem; align-items: center; }
@@ -577,12 +669,64 @@ def apply_styles() -> None:
             color: var(--text) !important;
         }
         [data-baseweb="select"] span, [data-baseweb="select"] div { color: var(--text) !important; }
+        [data-testid="stWidgetLabel"] {
+            color: var(--text-soft) !important;
+        }
+        [data-testid="stWidgetLabel"] svg,
+        [data-testid="stTooltipIcon"] svg,
+        [data-testid="stHelp"] svg,
+        button[aria-label*="help" i] svg,
+        button[aria-label*="info" i] svg,
+        svg[aria-label*="help" i],
+        svg[aria-label*="info" i] {
+            color: #e7f7ff !important;
+            fill: #e7f7ff !important;
+            stroke: #06111d !important;
+            background: #58cdf2 !important;
+            border: 1px solid #ffffff !important;
+            border-radius: 999px !important;
+            box-shadow: 0 0 0 2px rgba(88,205,242,.16), 0 4px 12px rgba(0,0,0,.28);
+        }
+        [data-testid="stTooltipIcon"]:hover svg,
+        button[aria-label*="help" i]:hover svg,
+        button[aria-label*="info" i]:hover svg {
+            background: #ffffff !important;
+            fill: #ffffff !important;
+            color: #ffffff !important;
+            stroke: #06111d !important;
+        }
         div[data-baseweb="popover"],
         div[data-baseweb="popover"] > div,
         ul[role="listbox"] {
             background: #111923 !important;
             border: 1px solid #53677d !important;
             color: var(--text) !important;
+        }
+        div[data-baseweb="tooltip"],
+        div[data-baseweb="tooltip"] *,
+        [role="tooltip"],
+        [role="tooltip"] *,
+        [data-testid="stTooltipContent"],
+        [data-testid="stTooltipContent"] * {
+            background: #07111d !important;
+            color: #f8fbff !important;
+            border-color: #8fdfff !important;
+            opacity: 1 !important;
+            text-shadow: none !important;
+        }
+        div[data-baseweb="tooltip"],
+        [role="tooltip"],
+        [data-testid="stTooltipContent"] {
+            border: 1px solid #8fdfff !important;
+            border-radius: 8px !important;
+            box-shadow: 0 16px 42px rgba(0,0,0,.38) !important;
+            padding: .25rem !important;
+        }
+        div[data-baseweb="tooltip"] p,
+        [role="tooltip"] p,
+        [data-testid="stTooltipContent"] p {
+            color: #f8fbff !important;
+            line-height: 1.45 !important;
         }
         li[role="option"],
         li[role="option"] div,

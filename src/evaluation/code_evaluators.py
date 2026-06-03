@@ -18,7 +18,7 @@ def check_arabic_language(query: str, answer: str) -> dict:
     return {
         "name": "arabic_language",
         "passed": arabic_ratio >= 0.55 and not disallowed,
-        "expected": "Arabic answer with only necessary English technical terms",
+        "expected": "Arabic answer with only necessary English technical terms and file names",
         "actual": {
             "arabic_ratio": round(arabic_ratio, 2),
             "disallowed_language": disallowed,
@@ -29,21 +29,28 @@ def check_arabic_language(query: str, answer: str) -> dict:
 
 
 def check_required_structure(query: str, answer: str) -> dict:
-    text = query.lower()
-    if any(word in text for word in ["quiz", "اختبار", "أسئلة", "اسئلة"]):
-        required = ["هدف الاختبار", "الأسئلة", "الإجابات", "نصيحة"]
+    text = (query or "").lower()
+    has_quiz_intent = any(word in text for word in ["quiz", "اختبار", "أسئلة", "اسئلة", "كويز"])
+    has_file_intent = any(
+        word in text
+        for word in ["summary", "summarize", "تلخيص", "لخص", "ملخص", "document", "file", "مستند", "ملف", "فايل"]
+    )
+    if has_quiz_intent and has_file_intent:
+        required = ["نظرة عامة", "خريطة", "الشرح", "المراجع"]
+    elif has_quiz_intent:
+        required = ["الاختبار", "السؤال", "الإجابة", "المصادر"]
     elif any(word in text for word in ["feedback", "evaluate", "correct", "قيّم", "قيم", "صحح"]):
         required = ["النتيجة", "الصحيح", "الأخطاء", "الدليل"]
     elif any(word in text for word in ["plan", "schedule", "خطة", "جدول"]):
         required = ["الهدف", "خطة", "تمارين", "مصادر"]
-    elif any(word in text for word in ["summary", "summarize", "تلخيص", "لخص", "ملخص", "document", "file", "مستند", "ملف"]):
-        required = ["نظرة عامة", "خريطة", "الشرح", "مثال", "خلاصة"]
+    elif has_file_intent:
+        required = ["نظرة عامة", "خريطة", "الشرح", "خلاصة", "المراجع"]
     else:
-        required = ["الفكرة", "الشرح", "مثال", "الدليل", "خلاصة"]
+        required = ["الإجابة", "الشرح", "المصادر"]
     present = [heading for heading in required if heading in answer]
     return {
         "name": "required_learning_structure",
-        "passed": len(present) >= 3,
+        "passed": len(present) >= min(3, len(required)),
         "expected": required,
         "actual": present,
     }
@@ -51,16 +58,28 @@ def check_required_structure(query: str, answer: str) -> dict:
 
 def check_source_grounding(query: str, answer: str, docs: list[dict], web_sources: list[dict] | None = None) -> dict:
     web_sources = web_sources or []
-    has_source_section = (
-        "# قائمة المصادر" in answer
-        or "# المراجع المستخدمة" in answer
-        or "# المصادر" in answer
-        or "# المصادر والدليل" in answer
-        or "# الدليل من الملف" in answer
-        or "# الدليل من المصادر" in answer
+    has_source_section = any(
+        marker in (answer or "")
+        for marker in (
+            "# قائمة المصادر",
+            "# المراجع المستخدمة",
+            "# المراجع",
+            "# المصادر",
+            "# المصدر",
+            "# المصادر والدليل",
+            "# الدليل من الملف",
+            "# الدليل من المصادر",
+        )
     )
-    mentions_files = "من الملفات" in answer or "ملفات" in answer or bool(docs and any((doc.get("source_name") or doc.get("source", "")) in answer for doc in docs[:3]))
-    mentions_web = "من الويب" in answer or "ويب" in answer or bool(web_sources and any(src.get("title", "") in answer for src in web_sources[:3]))
+    mentions_files = (
+        "من الملفات" in answer
+        or "ملفات" in answer
+        or "الملف:" in answer
+        or bool(docs and any((doc.get("source_name") or doc.get("source", "")) in answer for doc in docs[:3]))
+    )
+    mentions_web = "من الويب" in answer or "ويب" in answer or bool(
+        web_sources and any(src.get("title", "") in answer for src in web_sources[:3])
+    )
     mentions_model = "من النموذج" in answer
 
     expected = []
@@ -115,7 +134,7 @@ def check_word_count(query: str, answer: str) -> dict | None:
 
 
 def check_quiz_count(query: str, answer: str) -> dict | None:
-    if not any(word in query.lower() for word in ["quiz", "اختبار", "أسئلة", "اسئلة"]):
+    if not any(word in (query or "").lower() for word in ["quiz", "اختبار", "أسئلة", "اسئلة", "كويز"]):
         return None
     expected_match = re.search(r"(\d+)", query)
     expected = int(expected_match.group(1)) if expected_match else 5

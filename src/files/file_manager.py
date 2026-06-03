@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import hashlib
 from dataclasses import asdict
 from pathlib import Path
 
@@ -48,16 +49,30 @@ def save_uploaded_files(chat_id: str, uploaded_files, store: ChatStore | None = 
     chat = store.ensure_chat(chat_id)
     docs_dir = chat_raw_docs_dir(chat_id)
     saved_files = []
+    existing_hashes = {
+        item.get("content_hash")
+        for item in chat.get("files", [])
+        if item.get("content_hash")
+    }
+    existing_name_sizes = {
+        (item.get("original_name"), int(item.get("size_bytes") or 0))
+        for item in chat.get("files", [])
+    }
 
     for uploaded_file in uploaded_files:
         extension = Path(uploaded_file.name).suffix.lower()
         if extension not in SUPPORTED_EXTENSIONS:
             continue
+        data = uploaded_file.getbuffer()
+        content_hash = hashlib.sha256(data).hexdigest()
+        size_bytes = len(data)
+        if content_hash in existing_hashes or (uploaded_file.name, size_bytes) in existing_name_sizes:
+            continue
 
         file_id = new_id("file")
         saved_name = f"{file_id}_{safe_filename(uploaded_file.name)}"
         target = docs_dir / saved_name
-        target.write_bytes(uploaded_file.getbuffer())
+        target.write_bytes(data)
 
         meta = asdict(
             FileMeta(
@@ -65,14 +80,17 @@ def save_uploaded_files(chat_id: str, uploaded_files, store: ChatStore | None = 
                 original_name=uploaded_file.name,
                 saved_name=saved_name,
                 path=str(target),
-                size_bytes=target.stat().st_size,
+                size_bytes=size_bytes,
                 extension=extension,
                 upload_time=now_iso(),
                 indexing_status=IndexingStatus.FILES_UPLOADED,
             )
         )
+        meta["content_hash"] = content_hash
         chat.setdefault("files", []).append(meta)
         saved_files.append(meta)
+        existing_hashes.add(content_hash)
+        existing_name_sizes.add((uploaded_file.name, size_bytes))
 
     if saved_files:
         chat["indexing_status"] = IndexingStatus.FILES_UPLOADED
@@ -120,4 +138,3 @@ def mark_file_status(chat_id: str, status: str, store: ChatStore | None = None) 
         file_meta["indexing_status"] = status
     chat["indexing_status"] = status
     store.save_chat(chat)
-

@@ -26,6 +26,7 @@ from src.text_splitter import split_documents
 
 
 _VECTOR_STORES: dict[str, FAISS] = {}
+_VECTOR_STORE_SIGNATURES: dict[str, tuple] = {}
 
 
 def _key(chat_id: str | None) -> str:
@@ -107,6 +108,17 @@ def index_exists(chat_id: str | None = None) -> bool:
     return (index_dir / "index.faiss").exists() and (index_dir / "index.pkl").exists()
 
 
+def _index_signature(chat_id: str | None = None) -> tuple | None:
+    paths = [_manifest_path(chat_id), _index_dir(chat_id) / "index.faiss", _index_dir(chat_id) / "index.pkl"]
+    signature = []
+    for path in paths:
+        if not path.exists():
+            return None
+        stat = path.stat()
+        signature.append((str(path), stat.st_mtime_ns, stat.st_size))
+    return tuple(signature)
+
+
 def create_vector_store(chunks):
     if not chunks:
         return None
@@ -139,6 +151,7 @@ def delete_vector_store(chat_id: str | None = None) -> None:
     if manifest_path.exists():
         manifest_path.unlink()
     _VECTOR_STORES.pop(_key(chat_id), None)
+    _VECTOR_STORE_SIGNATURES.pop(_key(chat_id), None)
 
 
 def analyze_index_changes(chat_id: str | None = None) -> dict:
@@ -177,8 +190,12 @@ def rebuild_all(chat_id: str | None = None, tracer=None) -> IndexingResult:
     result = IndexingResult(status=IndexingStatus.INDEXING, full_rebuild=True)
 
     try:
+        if tracer:
+            tracer("Preparing index rebuild")
         delete_vector_store(chat_id)
 
+        if tracer:
+            tracer("Loading documents")
         started = perf_counter()
         documents = load_documents(chat_id=chat_id)
         result.steps.append(
@@ -190,18 +207,24 @@ def rebuild_all(chat_id: str | None = None, tracer=None) -> IndexingResult:
             result.step = "No files to index"
             return result
 
+        if tracer:
+            tracer("Splitting documents")
         started = perf_counter()
         chunks = split_documents(documents)
         result.steps.append(
             {"name": "Splitting documents", "status": "ok", "duration_ms": round((perf_counter() - started) * 1000)}
         )
 
+        if tracer:
+            tracer(f"Creating embeddings for {len(chunks)} chunks")
         started = perf_counter()
         vector_store = create_vector_store(chunks)
         result.steps.append(
             {"name": "Creating embeddings", "status": "ok", "duration_ms": round((perf_counter() - started) * 1000)}
         )
 
+        if tracer:
+            tracer("Saving vector store")
         started = perf_counter()
         save_vector_store(vector_store, chat_id=chat_id)
         result.steps.append(
@@ -215,12 +238,17 @@ def rebuild_all(chat_id: str | None = None, tracer=None) -> IndexingResult:
         save_manifest(chat_id, indexed_files)
 
         _VECTOR_STORES[_key(chat_id)] = vector_store
+        signature = _index_signature(chat_id)
+        if signature is not None:
+            _VECTOR_STORE_SIGNATURES[_key(chat_id)] = signature
         result.status = IndexingStatus.READY
         result.step = "Ready"
         result.files_indexed = len(indexed_files)
         result.chunks_indexed = len(chunks)
         result.manifest_changed = True
         result.steps.append({"name": "Ready", "status": "ok", "duration_ms": 0})
+        if tracer:
+            tracer("Ready")
         return result
     except Exception as exc:
         result.status = IndexingStatus.FAILED
@@ -229,21 +257,37 @@ def rebuild_all(chat_id: str | None = None, tracer=None) -> IndexingResult:
         return result
 
 
-def get_vector_store(chat_id: str | None = None):
+def get_vector_store(chat_id: str | None = None, *, auto_rebuild: bool = False):
     store_key = _key(chat_id)
+    signature = _index_signature(chat_id)
+    if (
+        signature is not None
+        and store_key in _VECTOR_STORES
+        and _VECTOR_STORE_SIGNATURES.get(store_key) == signature
+    ):
+        return _VECTOR_STORES[store_key]
+
     changes = analyze_index_changes(chat_id)
 
     if changes["reason"] == "empty":
         _VECTOR_STORES.pop(store_key, None)
+        _VECTOR_STORE_SIGNATURES.pop(store_key, None)
         return None
 
     if changes["needs_full_rebuild"]:
+        if not auto_rebuild:
+            _VECTOR_STORES.pop(store_key, None)
+            _VECTOR_STORE_SIGNATURES.pop(store_key, None)
+            return None
         result = rebuild_all(chat_id)
         if result.status != IndexingStatus.READY:
             return None
 
     if store_key not in _VECTOR_STORES:
         _VECTOR_STORES[store_key] = load_vector_store(chat_id)
+    signature = _index_signature(chat_id)
+    if signature is not None:
+        _VECTOR_STORE_SIGNATURES[store_key] = signature
 
     return _VECTOR_STORES.get(store_key)
 

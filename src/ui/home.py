@@ -91,7 +91,7 @@ def render_home_page() -> None:
 
     action_col, caption_col = st.columns([0.22, 0.78])
     with action_col:
-        if st.button("Start Learning Now", type="primary", use_container_width=True):
+        if st.button("Start Learning Now", type="primary", width="stretch"):
             st.session_state.page = "Chat"
             st.rerun()
     with caption_col:

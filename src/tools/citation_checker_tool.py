@@ -8,9 +8,22 @@ class CitationCheckerTool:
         docs = docs or []
         web_sources = web_sources or []
         sources_exist = bool(docs or web_sources)
+        text = answer or ""
         has_source_section = any(
-            marker in (answer or "")
-            for marker in ("# قائمة المصادر", "# المصادر", "# المصادر والدليل", "من الملفات", "من الويب")
+            marker in text
+            for marker in (
+                "# قائمة المصادر",
+                "# المصادر",
+                "# المصدر",
+                "# المصادر والدليل",
+                "# المراجع المستخدمة",
+                "# المراجع",
+                "# الدليل من الملف",
+                "# الدليل من المصادر",
+                "من الملفات",
+                "من الويب",
+                "ملفات",
+            )
         )
         passed = not sources_exist or has_source_section
         return {

@@ -63,11 +63,11 @@ def render_left_sidebar(store: ChatStore) -> None:
             unsafe_allow_html=True,
         )
 
-        if st.button("Home", use_container_width=True):
+        if st.button("Home", width="stretch"):
             st.session_state.page = "Home"
             st.rerun()
 
-        if st.button("New chat", use_container_width=True, type="primary"):
+        if st.button("New chat", width="stretch", type="primary"):
             chat = store.create_chat()
             st.session_state.active_chat_id = chat["chat_id"]
             st.session_state.page = "Chat"
@@ -89,18 +89,18 @@ def render_left_sidebar(store: ChatStore) -> None:
                 if st.button(
                     title[:46],
                     key=f"open_{chat_id}",
-                    use_container_width=True,
+                    width="stretch",
                     type="primary" if active else "secondary",
                 ):
                     st.session_state.active_chat_id = chat_id
                     st.session_state.editing_chat_id = None
                     st.rerun()
             with edit_col:
-                if st.button("✎", key=f"edit_{chat_id}", help="Rename chat", use_container_width=True):
+                if st.button("✎", key=f"edit_{chat_id}", help="Rename chat", width="stretch"):
                     st.session_state.editing_chat_id = chat_id
                     st.rerun()
             with delete_col:
-                if st.button("×", key=f"delete_{chat_id}", help="Delete chat", use_container_width=True):
+                if st.button("×", key=f"delete_{chat_id}", help="Delete chat", width="stretch"):
                     _delete_one_chat(store, chat_id)
                     st.rerun()
 
@@ -113,17 +113,16 @@ def render_left_sidebar(store: ChatStore) -> None:
                 )
                 save_col, cancel_col = st.columns(2)
                 with save_col:
-                    if st.button("Save", key=f"save_rename_{chat_id}", use_container_width=True):
+                    if st.button("Save", key=f"save_rename_{chat_id}", width="stretch"):
                         store.rename_chat(chat_id, new_title)
                         st.session_state.editing_chat_id = None
                         st.rerun()
                 with cancel_col:
-                    if st.button("Cancel", key=f"cancel_rename_{chat_id}", use_container_width=True):
+                    if st.button("Cancel", key=f"cancel_rename_{chat_id}", width="stretch"):
                         st.session_state.editing_chat_id = None
                         st.rerun()
 
         st.divider()
-        if st.button("Clear all chat history", use_container_width=True):
+        if st.button("Clear all chat history", width="stretch"):
             _clear_all_chats(store)
             st.rerun()
-

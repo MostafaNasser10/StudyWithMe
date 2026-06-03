@@ -1,6 +1,7 @@
 import streamlit as st
 
 from src.chat.chat_store import ChatStore
+from src.files.indexing_jobs import start_indexing_job
 from src.files.indexing_status import STATUS_COLORS, STATUS_LABELS, IndexingStatus
 from src.ui.components import format_bytes, safe_text, short_name
 from src.ui.upload_panel import render_file_delete_button, render_upload_controls
@@ -10,6 +11,23 @@ def _badge(status: str) -> str:
     color = STATUS_COLORS.get(status, "blue")
     label = STATUS_LABELS.get(status, status)
     return f"<span class='badge {color}'>{safe_text(label)}</span>"
+
+
+def _indexing_progress(step: str) -> int:
+    text = (step or "").lower()
+    if "checking" in text:
+        return 12
+    if "loading" in text:
+        return 24
+    if "splitting" in text:
+        return 42
+    if "embedding" in text:
+        return 68
+    if "saving" in text:
+        return 88
+    if "ready" in text:
+        return 100
+    return 35
 
 
 def _latest_trace(chat: dict) -> dict | None:
@@ -78,10 +96,17 @@ def _render_metric_window(title: str, result: dict | None, metrics: list[tuple[s
     status = result.get("status", "unknown")
     if status != "ok":
         st.caption(f"Status: {status}")
+        if status == "disabled":
+            st.caption("External evaluator is manual for fast chat responses. Use Run RAGAS / DeepEval on an assistant message when you need it.")
+            return
         message = result.get("message") or result.get("error")
         if message:
             st.caption(str(message)[:220])
         return
+    if result.get("evaluation_language") == "english":
+        st.caption("Evaluation language: English judge copy of the answer.")
+    elif (result.get("translation") or {}).get("status") in {"error", "unavailable"}:
+        st.caption((result.get("translation") or {}).get("message", "Evaluation translation was skipped.")[:220])
 
     for key, label, lower_is_better in metrics:
         value = result.get(key)
@@ -117,13 +142,19 @@ def _render_metric_window(title: str, result: dict | None, metrics: list[tuple[s
         st.caption(notes)
 
 
-def render_right_sidebar(chat: dict, store: ChatStore) -> None:
+@st.fragment(run_every="2s")
+def _render_uploaded_files_panel(chat_id: str, store: ChatStore) -> dict:
+    chat = store.ensure_chat(chat_id)
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>Uploaded files</div>", unsafe_allow_html=True)
     render_upload_controls(chat, store)
+
     st.markdown(_badge(chat.get("indexing_status", IndexingStatus.EMPTY)), unsafe_allow_html=True)
     if chat.get("indexing_step"):
         st.caption(chat["indexing_step"])
+    if chat.get("indexing_status") == IndexingStatus.INDEXING:
+        st.progress(_indexing_progress(chat.get("indexing_step", "")))
+        st.caption("Indexing is running in the background.")
 
     files = chat.get("files", [])
     if files:
@@ -145,25 +176,16 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
     else:
         st.caption("No files in this chat.")
 
-    if files and st.button("Build / refresh index", use_container_width=True, type="primary"):
-        from src.vector_store import rebuild_all
-
-        store.update_chat(chat["chat_id"], indexing_status=IndexingStatus.INDEXING, indexing_step="Loading documents")
-        with st.spinner("Indexing this chat..."):
-            result = rebuild_all(chat["chat_id"])
-        new_chat = store.ensure_chat(chat["chat_id"])
-        for item in new_chat.get("files", []):
-            item["indexing_status"] = result.status
-        store.update_chat(
-            chat["chat_id"],
-            files=new_chat.get("files", []),
-            indexing_status=result.status,
-            indexing_step=result.step,
-        )
-        st.session_state.last_index_result = result.to_dict()
-        st.rerun()
+    if files and chat.get("indexing_status") == IndexingStatus.FAILED:
+        if st.button("Retry indexing", width="stretch", type="primary"):
+            start_indexing_job(chat["chat_id"], store, step="Retrying index", force=True)
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
+    return chat
 
+
+def render_right_sidebar(chat: dict, store: ChatStore) -> None:
+    chat = _render_uploaded_files_panel(chat["chat_id"], store)
     trace, evaluation = _current_process(chat)
 
     st.markdown("<div class='right-panel'>", unsafe_allow_html=True)
@@ -240,7 +262,7 @@ def render_right_sidebar(chat: dict, store: ChatStore) -> None:
             }
             for name, score in rubric.items()
         ]
-        st.dataframe(rows, use_container_width=True, hide_index=True, height=260)
+        st.dataframe(rows, width="stretch", hide_index=True, height=260)
         with st.expander("Why these scores?"):
             for row in rows:
                 st.markdown(f"**{row['Criterion']} - {row['Score']}**")

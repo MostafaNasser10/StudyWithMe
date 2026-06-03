@@ -3,6 +3,14 @@ from __future__ import annotations
 from src.graph.state import StudyGraphState
 
 
+def _can_parallelize_tasks(state: StudyGraphState) -> bool:
+    tasks = state.get("tasks") or []
+    if len(tasks) <= 1:
+        return False
+    task_types = {str((task or {}).get("type") or "") for task in tasks}
+    return "quiz_feedback" not in task_types
+
+
 def route_after_router(state: StudyGraphState) -> str:
     if state.get("next_action") == "final":
         return "clarify"
@@ -25,6 +33,8 @@ def route_after_router(state: StudyGraphState) -> str:
         if state.get("docs") or state.get("context"):
             return "web_search"
         return "retrieve_docs"
+    if state.get("route") == "web_search" and (state.get("web_sources") or state.get("context")):
+        return "build_prompt"
     if state.get("route") in {"tutor_rag", "summary", "feedback"} and not state.get("needs_documents"):
         return "build_prompt"
     if state.get("route") == "quiz_generate" and not state.get("needs_documents"):
@@ -38,6 +48,8 @@ def route_after_router(state: StudyGraphState) -> str:
         first_task_type = (tasks[0] or {}).get("type") if tasks else None
         if state.get("needs_web") and first_task_type != "web_search":
             return "web_search"
+        if _can_parallelize_tasks(state):
+            return "parallel_agents"
         return "task_dispatcher"
     return state.get("route", "tutor_rag")
 

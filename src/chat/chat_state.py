@@ -1,7 +1,7 @@
 import streamlit as st
 
 from src.chat.chat_store import ChatStore
-from src.config import DEFAULT_EVALUATION_MODE, DEFAULT_MODEL_PROFILE
+from src.config import DEFAULT_BM25_SEARCH_ENABLED, DEFAULT_EVALUATION_MODE, DEFAULT_MODEL_PROFILE
 
 
 @st.cache_resource(show_spinner=False)
@@ -14,6 +14,7 @@ def init_session_state() -> None:
     st.session_state.setdefault("page", "Home")
     st.session_state.setdefault("source_scope", "Documents only")
     st.session_state.setdefault("web_search_enabled", False)
+    st.session_state.setdefault("bm25_search_enabled", DEFAULT_BM25_SEARCH_ENABLED)
     st.session_state.setdefault("model_profile", DEFAULT_MODEL_PROFILE)
     st.session_state.setdefault("reflection_enabled", True)
     st.session_state.setdefault("critic_enabled", True)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from queue import Empty, Queue
 import random
 import re
@@ -12,9 +13,25 @@ from typing import Any, Callable
 from src.arabic_guard import contains_disallowed_language, enforce_arabic_answer
 from src.chat.chat_models import new_id, now_iso
 from src.config import (
+    AUTOMATIC_EXTERNAL_RAG_EVAL,
     ARABIC_GUARD_LLM_REPAIR_ENABLED,
+    ARABIC_GUARD_LLM_TEMPERATURE,
+    ANSWER_LLM_TEMPERATURE,
+    CRITIC_LLM_TEMPERATURE,
+    ENABLE_DEEPEVAL_EVAL,
+    ENABLE_RAGAS_EVAL,
+    FUNCTION_CALLING_LLM_TEMPERATURE,
+    LLM_DEFAULT_TEMPERATURE,
     LANGSMITH_PROJECT,
     LANGSMITH_TRACING_ENABLED,
+    QUALITY_AGENT_LLM_REVIEW_ENABLED,
+    QUALITY_AGENT_LLM_TIMEOUT_SECONDS,
+    QUIZ_FEEDBACK_LLM_TEMPERATURE,
+    QUIZ_GENERATION_LLM_TEMPERATURE,
+    QUIZ_REPAIR_LLM_TEMPERATURE,
+    REFLECTION_LLM_TEMPERATURE,
+    ROUTER_LLM_TEMPERATURE,
+    STUDY_PLAN_LLM_TEMPERATURE,
     QUIZ_SYNTHETIC_FALLBACK_ENABLED,
     TOP_K,
 )
@@ -126,7 +143,7 @@ def _set_llm_settings(state: StudyGraphState) -> dict[str, str]:
 def _invoke_llm(
     state: StudyGraphState,
     prompt: str,
-    temperature: float = 0.3,
+    temperature: float | None = LLM_DEFAULT_TEMPERATURE,
     timeout_seconds: int = GRAPH_LLM_TIMEOUT_SECONDS,
 ) -> str:
     settings = _set_llm_settings(state)
@@ -183,6 +200,17 @@ TASK_AGENT_NAMES = {
     "clarify": "Input Guard",
 }
 
+TASK_SECTION_TITLES = {
+    "explain": "الإجابة",
+    "summary": "شرح الملف",
+    "quiz_generate": "الاختبار",
+    "study_plan": "خطة المذاكرة",
+    "web_search": "مصادر الويب",
+    "quiz_feedback": "مراجعة الاختبار",
+    "feedback": "التصحيح",
+    "clarify": "توضيح الطلب",
+}
+
 TASK_ROUTES = {
     "explain": "tutor_rag",
     "summary": "summary",
@@ -193,6 +221,10 @@ TASK_ROUTES = {
     "feedback": "feedback",
     "clarify": "clarify",
 }
+
+
+def _task_section_title(task_type: str, fallback: str | None = None) -> str:
+    return TASK_SECTION_TITLES.get(task_type, fallback or task_type)
 
 
 def _active_task(state: StudyGraphState) -> dict[str, Any]:
@@ -236,7 +268,7 @@ def _contains_any(text: str, words: list[str]) -> bool:
 
 
 def _has_summary_intent(text: str, query: str) -> bool:
-    return _is_document_overview_query(query) or _contains_any(text, ["summary", "summarize", "تلخيص", "لخص", "ملخص"])
+    return _is_document_summary_request(query) or _contains_any(text, ["summary", "summarize", "تلخيص", "لخص", "ملخص"])
 
 
 def _has_study_plan_intent(text: str) -> bool:
@@ -265,6 +297,29 @@ def _has_current_web_intent(text: str) -> bool:
         "ابحث",
     ]
     return _contains_any(text, web_request_words)
+
+
+def _has_brief_answer_request(query: str) -> bool:
+    text = (query or "").lower()
+    if re.search(r"\b(?:in\s+)?(?:one|two|three|\d+)\s+sentences?\b", text):
+        return True
+    brief_words = [
+        "briefly",
+        "short answer",
+        "very short",
+        "concise",
+        "quick summary",
+        "باختصار",
+        "مختصر",
+        "بسرعة",
+        "في جملة",
+        "في جملتين",
+        "جملتين",
+        "جملة واحدة",
+        "سطرين",
+        "تلخيص سريع",
+    ]
+    return any(word in text for word in brief_words)
 
 
 def _has_explicit_document_intent(text: str) -> bool:
@@ -423,9 +478,43 @@ def _direct_answer(body: str, source: str = "من النموذج") -> str:
 """
 
 
+def _brief_two_sentence_answer(answer: str) -> str:
+    cleaned_lines: list[str] = []
+    skip_sources = False
+    for line in (answer or "").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            if any(word in stripped for word in ("المصادر", "المراجع", "الدليل", "Source", "References")):
+                skip_sources = True
+            continue
+        if skip_sources:
+            continue
+        if stripped.startswith(("-", "*", "•")):
+            stripped = stripped.lstrip("-*• ").strip()
+        cleaned_lines.append(stripped)
+
+    compact = " ".join(cleaned_lines).strip()
+    if not compact:
+        return (answer or "").strip()
+    sentences = [part.strip() for part in re.split(r"(?<=[.!؟。])\s+", compact) if part.strip()]
+    if len(sentences) >= 2:
+        return " ".join(sentences[:2])
+    fallback_parts = [part.strip() for part in re.split(r"[؛;]\s+|\s{2,}", compact) if part.strip()]
+    return " ".join(fallback_parts[:2]).strip() or compact
+
+
 def _answer_style_extra(state: StudyGraphState, route: str) -> str:
     if state.get("answer_style") == "study_report" or route in {"summary", "study_plan"}:
-        return ""
+        return """
+Grounding requirements:
+- Treat retrieved context as a partial view unless the context explicitly covers the whole file.
+- Do not infer chapter order, document structure, lifecycle stages, or complete coverage from a few snippets.
+- Prefer phrases like "حسب المقاطع المتاحة" and "تظهر المقاطع" when explaining uploaded files.
+- If a point is useful background but not directly in the context, label it as "خلفية عامة" or omit it.
+- Finish every markdown table completely; use bullets if there is not enough evidence for a table.
+"""
     return """
 Output style override:
 - Do not use the study report template unless the user explicitly asks for a study report, summary, study guide, or full document explanation.
@@ -474,6 +563,14 @@ def _is_document_overview_query(query: str) -> bool:
         "ملخص المستند",
     ]
     return any(word in text for word in overview_words)
+
+
+def _is_document_summary_request(query: str) -> bool:
+    text = (query or "").lower()
+    return _is_document_overview_query(query) or (
+        _has_explicit_document_intent(text)
+        and _contains_any(text, ["summary", "summarize", "تلخيص", "لخص", "لخصلي", "لخصلى", "ملخص"])
+    )
 
 
 def _has_quiz_intent(text: str) -> bool:
@@ -562,13 +659,24 @@ def _is_low_information_query(query: str) -> bool:
 
 def _default_task_for_route(route: str) -> dict[str, Any]:
     return {
-        "summary": _task("summary", "الملخص"),
-        "quiz_generate": _task("quiz_generate", "الاختبار"),
-        "study_plan": _task("study_plan", "خطة المذاكرة"),
-        "web_search": _task("web_search", "بحث الويب"),
-        "feedback": _task("feedback", "التصحيح"),
-        "clarify": _task("clarify", "توضيح الطلب"),
-    }.get(route, _task("explain", "الشرح"))
+        "summary": _task("summary", _task_section_title("summary")),
+        "quiz_generate": _task("quiz_generate", _task_section_title("quiz_generate")),
+        "study_plan": _task("study_plan", _task_section_title("study_plan")),
+        "web_search": _task("web_search", _task_section_title("web_search")),
+        "feedback": _task("feedback", _task_section_title("feedback")),
+        "clarify": _task("clarify", _task_section_title("clarify")),
+    }.get(route, _task("explain", _task_section_title("explain")))
+
+
+def _upsert_task(tasks: list[dict[str, Any]], task_type: str, title: str, **extra: Any) -> list[dict[str, Any]]:
+    updated = list(tasks or [])
+    for item in updated:
+        if str(item.get("type") or "") == task_type:
+            item.update({key: value for key, value in extra.items() if value is not None})
+            item.setdefault("title", title)
+            return updated
+    updated.append(_task(task_type, title, **extra))
+    return updated
 
 
 def _normalize_planner_tasks(tasks: list[dict[str, Any]], route: str) -> list[dict[str, Any]]:
@@ -580,7 +688,7 @@ def _normalize_planner_tasks(tasks: list[dict[str, Any]], route: str) -> list[di
             task_type = "explain"
         if task_type not in allowed:
             continue
-        title = str(item.get("title") or TASK_AGENT_NAMES.get(task_type) or task_type)
+        title = _task_section_title(task_type)
         normalized.append(_task(task_type, title, num_questions=item.get("num_questions")))
     return _dedupe_tasks(normalized or [_default_task_for_route(route)])
 
@@ -594,23 +702,39 @@ def _filter_planned_tool_calls(
     for call in tool_calls:
         if call.tool_name == "document_search" and source_scope == "Web only":
             continue
-        if call.tool_name == "web_search" and (not web_enabled or source_scope == "Documents only"):
+        if call.tool_name == "web_search" and (source_scope == "Documents only" or (not web_enabled and source_scope != "Web only")):
             continue
         filtered.append(call)
     return ToolCallPlan(tool_calls=filtered).tool_calls
 
 
-def _enforce_source_policy(decision: PlannerDecision, source_scope: str, web_enabled: bool) -> PlannerDecision:
+def _enforce_source_policy(decision: PlannerDecision, source_scope: str, web_enabled: bool, query: str = "") -> PlannerDecision:
     if source_scope == "Documents only":
         decision.needs_web = False
         if decision.route in {"web_search", "documents_plus_web"}:
             decision.route = "tutor_rag"
         decision.tasks = [task for task in decision.tasks if task.get("type") != "web_search"]
     elif source_scope == "Web only":
+        if _has_explicit_document_intent((query or "").lower()):
+            decision.route = "clarify"
+            decision.tasks = [_task("clarify", _task_section_title("clarify"))]
+            decision.needs_documents = False
+            decision.needs_web = False
+            decision.tool_calls = []
+            return decision
         decision.needs_documents = False
-        if decision.route in {"tutor_rag", "summary", "quiz_generate", "study_plan", "documents_plus_web"}:
-            decision.route = "web_search" if web_enabled else "clarify"
-        decision.tasks = [task for task in decision.tasks if task.get("type") not in {"summary", "quiz_generate"}]
+        decision.needs_web = True
+        if decision.route in {"tutor_rag", "summary", "quiz_generate", "study_plan", "documents_plus_web", "clarify"}:
+            decision.route = "web_search"
+        decision.tasks = [_task("web_search", _task_section_title("web_search"))]
+        if not any(call.tool_name == "web_search" for call in decision.tool_calls):
+            decision.tool_calls = [
+                ToolCallRequest(
+                    tool_name="web_search",
+                    arguments={"query": query},
+                    reasoning="Source mode is Web only, so the answer needs web results.",
+                )
+            ] + list(decision.tool_calls or [])
     elif source_scope == "Documents + Web" and web_enabled and decision.needs_documents:
         decision.needs_web = True
         if decision.needs_documents and not any(task.get("type") == "web_search" for task in decision.tasks):
@@ -627,12 +751,16 @@ def _planner_decision_from_payload(
     decision = PlannerDecision(**payload)
     text = (query or "").lower()
     arithmetic_expression = _extract_arithmetic_expression(query)
-    if source_scope != "Web only" and _is_document_overview_query(query):
+    quiz_requested = _has_quiz_intent(text)
+    if source_scope != "Web only" and _is_document_summary_request(query):
         decision.route = "summary"
-        decision.tasks = [_task("summary", "شرح الملف")]
+        decision.tasks = [
+            _task("summary", _task_section_title("summary")),
+            *[task for task in decision.tasks if str(task.get("type") or "") not in {"explain", "summary"}],
+        ]
         decision.selected_agent = "Summary"
         decision.needs_documents = True
-        decision.answer_style = "study_report"
+        decision.answer_style = "direct" if _has_brief_answer_request(query) else "study_report"
         if not any(call.tool_name == "document_search" for call in decision.tool_calls):
             decision.tool_calls = [
                 ToolCallRequest(
@@ -642,13 +770,24 @@ def _planner_decision_from_payload(
                 )
             ] + list(decision.tool_calls or [])
 
-    if arithmetic_expression and not _has_quiz_intent(text):
-        decision.tasks = [task for task in decision.tasks if str(task.get("type") or "") != "quiz_generate"]
-        if decision.route == "quiz_generate":
-            decision.route = "tutor_rag"
-            decision.selected_agent = "RAG Tutor"
-        if not decision.tasks:
-            decision.tasks = [_task("explain", "الإجابة")]
+    if quiz_requested:
+        decision.tasks = _upsert_task(
+            decision.tasks,
+            "quiz_generate",
+            _task_section_title("quiz_generate"),
+            num_questions=_requested_question_count(query),
+        )
+        if source_scope != "Web only":
+            decision.needs_documents = True
+
+    if arithmetic_expression:
+        if not quiz_requested:
+            decision.tasks = [task for task in decision.tasks if str(task.get("type") or "") != "quiz_generate"]
+            if decision.route == "quiz_generate":
+                decision.route = "tutor_rag"
+                decision.selected_agent = "RAG Tutor"
+            if not decision.tasks:
+                decision.tasks = [_task("explain", "الإجابة")]
         if not any(call.tool_name == "calculator" for call in decision.tool_calls):
             decision.tool_calls = [
                 ToolCallRequest(
@@ -662,7 +801,7 @@ def _planner_decision_from_payload(
         decision.route = "multi_task"
     decision.needs_documents = bool(decision.needs_documents and source_scope != "Web only")
     decision.needs_web = bool(decision.needs_web and web_enabled and source_scope != "Documents only")
-    decision = _enforce_source_policy(decision, source_scope, web_enabled)
+    decision = _enforce_source_policy(decision, source_scope, web_enabled, query)
     decision.tasks = _normalize_planner_tasks(decision.tasks, decision.route)
     if len(decision.tasks) > 1 and decision.route not in {"documents_plus_web"}:
         decision.route = "multi_task"
@@ -670,6 +809,8 @@ def _planner_decision_from_payload(
         only = str((decision.tasks[0] or {}).get("type") or "explain")
         decision.route = "tutor_rag" if only == "explain" else TASK_ROUTES.get(only, "tutor_rag")
     decision.tool_calls = _filter_planned_tool_calls(decision.tool_calls, source_scope, web_enabled)
+    if decision.route == "multi_task":
+        decision.selected_agent = "Planner"
     if not decision.selected_agent:
         decision.selected_agent = _selected_agent_for_route(decision.route)
     return decision
@@ -699,7 +840,7 @@ HAS SUBMITTED QUIZ ANSWERS:
 {state.get("user_answers") is not None}
 """
     try:
-        raw = _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 25))
+        raw = _invoke_llm(state, prompt, temperature=ROUTER_LLM_TEMPERATURE, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 25))
         decision = _planner_decision_from_payload(_json_from_text(raw), state.get("user_query", ""), source_scope, web_enabled)
     except Exception as exc:
         state["error"] = str(exc)
@@ -744,8 +885,13 @@ HAS SUBMITTED QUIZ ANSWERS:
     }
     state["trace"] = trace
     if route == "clarify":
+        clarify_body = (
+            "أنت في وضع الويب فقط، لذلك لا أستطيع قراءة الملفات المرفوعة في هذا السؤال. غيّر وضع المصادر إلى المستندات فقط أو المستندات مع الويب إذا كنت تريد شرح الملف."
+            if source_scope == "Web only"
+            else "أحتاج طلبا أوضح أو وضع مصادر مناسب قبل أن أبدأ. اكتب مثلا: اشرح الملف، اعمل اختبارا من المحاضرة، أو فعّل الويب إذا كان السؤال عن معلومة حديثة."
+        )
         state["final_answer"] = _direct_answer(
-            "أحتاج طلبا أوضح أو وضع مصادر مناسب قبل أن أبدأ. اكتب مثلا: اشرح الملف، اعمل اختبارا من المحاضرة، أو فعّل الويب إذا كان السؤال عن معلومة حديثة.",
+            clarify_body,
             "مخطط سير العمل",
         )
         state["next_action"] = "final"
@@ -858,7 +1004,7 @@ AVAILABLE CONTEXT PREVIEW:
 {(state.get("context") or "")[:1200]}
 """
         try:
-            raw = _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 20))
+            raw = _invoke_llm(state, prompt, temperature=FUNCTION_CALLING_LLM_TEMPERATURE, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 20))
             payload = _json_from_text(raw)
             if "tool_calls" in payload:
                 plan = ToolCallPlan(**payload)
@@ -890,8 +1036,27 @@ AVAILABLE CONTEXT PREVIEW:
     call_dicts: list[dict[str, Any]] = []
     response_dicts: list[dict[str, Any]] = []
     context_chunks: list[str] = []
-    for call in plan.tool_calls:
-        result = execute_registered_tool(call.tool_name, call.arguments, state)
+    calls = list(plan.tool_calls)
+    tool_results_by_index: dict[int, dict[str, Any]] = {}
+    with ThreadPoolExecutor(max_workers=max(1, min(len(calls), 4))) as executor:
+        futures = {
+            executor.submit(execute_registered_tool, call.tool_name, call.arguments, dict(state)): idx
+            for idx, call in enumerate(calls)
+        }
+        for future in as_completed(futures):
+            idx = futures[future]
+            try:
+                tool_results_by_index[idx] = future.result()
+            except Exception as exc:
+                tool_results_by_index[idx] = {
+                    "ok": False,
+                    "useful": False,
+                    "result": {},
+                    "error": str(exc),
+                }
+
+    for idx, call in enumerate(calls):
+        result = tool_results_by_index.get(idx) or {"ok": False, "useful": False, "result": {}, "error": "Tool did not return."}
         response = ToolCallResponse(
             tool_name=call.tool_name,
             arguments=call.arguments,
@@ -911,6 +1076,7 @@ AVAILABLE CONTEXT PREVIEW:
         if call.tool_name == "document_search" and result.get("useful"):
             payload = result.get("result") or {}
             state["docs"] = payload.get("docs") or state.get("docs") or []
+            state["retrieval_breakdown"] = payload.get("breakdown") or state.get("retrieval_breakdown") or {}
         if call.tool_name == "web_search" and result.get("useful"):
             payload = result.get("result") or {}
             state["web_sources"] = payload.get("results") or state.get("web_sources") or []
@@ -965,7 +1131,7 @@ def collect_task_output_node(state: StudyGraphState) -> StudyGraphState:
     task = state.get("active_task") or _active_task(state)
     task_type = str(task.get("type") or "explain")
     idx = int(state.get("current_task_index") or 0)
-    title = str(task.get("title") or TASK_AGENT_NAMES.get(task_type, task_type.title()))
+    title = _task_section_title(task_type)
 
     content = (state.get("final_answer") or state.get("raw_answer") or "").strip()
     section: dict[str, Any] = {"title": title, "type": task_type, "content": content}
@@ -1004,6 +1170,128 @@ def collect_task_output_node(state: StudyGraphState) -> StudyGraphState:
     return state
 
 
+def parallel_agents_node(state: StudyGraphState) -> StudyGraphState:
+    """Run independent planned tasks in parallel.
+
+    LangGraph routing decides the workflow shape. This node is the parallel
+    execution layer for multi-task prompts: each task receives the same retrieved
+    context, runs in its own state copy, and returns a section. The original
+    task order is restored before final composition so the UI remains stable.
+    """
+
+    started = perf_counter()
+    tasks = state.get("tasks") or []
+    if len(tasks) <= 1:
+        _record(state, "Parallel Agents", started, output="single task skipped")
+        return task_dispatcher_node(state)
+
+    results: list[dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=min(len(tasks), 4)) as executor:
+        futures = {
+            executor.submit(_run_parallel_task, state, idx, task): idx
+            for idx, task in enumerate(tasks)
+        }
+        for future in as_completed(futures):
+            try:
+                results.append(future.result())
+            except Exception as exc:
+                idx = futures[future]
+                task = tasks[idx] or {}
+                results.append(
+                    {
+                        "index": idx,
+                        "type": str(task.get("type") or "unknown"),
+                        "title": str(task.get("title") or "Task"),
+                        "status": "error",
+                        "content": _direct_answer("تعذر تنفيذ هذا الجزء من الطلب.", "Parallel Agents"),
+                        "error": str(exc),
+                    }
+                )
+
+    results.sort(key=lambda item: int(item.get("index") or 0))
+    sections: list[dict[str, Any]] = []
+    task_outputs: dict[str, Any] = {}
+    task_results: list[dict[str, Any]] = []
+    for result in results:
+        section = {
+            "title": result.get("title"),
+            "type": result.get("type"),
+            "content": result.get("content") or "",
+        }
+        if result.get("quiz"):
+            section["quiz"] = result.get("quiz")
+            state["quiz"] = result.get("quiz")
+        if result.get("web_sources"):
+            section["web_sources"] = result.get("web_sources")
+            state["web_sources"] = result.get("web_sources") or state.get("web_sources") or []
+        sections.append(section)
+        key = f"{int(result.get('index') or 0) + 1}_{result.get('type')}"
+        task_outputs[key] = section
+        task_results.append(
+            {
+                "index": result.get("index"),
+                "type": result.get("type"),
+                "title": result.get("title"),
+                "status": result.get("status", "ok"),
+                "parallel": True,
+            }
+        )
+
+    state["final_sections"] = sections
+    state["task_outputs"] = task_outputs
+    state["task_results"] = task_results
+    state["parallel_agent_results"] = results
+    state["current_task_index"] = len(tasks)
+    state["selected_agent"] = "Parallel Agents"
+    state["next_action"] = "compose_final"
+    state.setdefault("trace", {})["parallel_agent_results"] = results
+    _record(state, "Parallel Agents", started, output=f"tasks={len(tasks)}")
+    return state
+
+
+def _run_parallel_task(state: StudyGraphState, idx: int, task: dict[str, Any]) -> dict[str, Any]:
+    task_type = str(task.get("type") or "explain")
+    title = _task_section_title(task_type)
+    task_state: StudyGraphState = {
+        **dict(state),
+        "active_task": task,
+        "current_task_index": idx,
+        "prompt": None,
+        "raw_answer": None,
+        "final_answer": None,
+        "error": None,
+    }
+
+    if task_type in {"explain", "feedback", "summary"}:
+        task_state = build_prompt_node(task_state)
+        task_state = summary_node(task_state) if task_type == "summary" else tutor_answer_node(task_state)
+    elif task_type == "quiz_generate":
+        task_state = quiz_generation_node(task_state)
+    elif task_type == "study_plan":
+        task_state = study_plan_node(task_state)
+    elif task_type == "web_search":
+        if not task_state.get("web_sources"):
+            task_state = web_search_node(task_state)
+        if task_state.get("web_sources") and not task_state.get("final_answer"):
+            lines = ["تم جلب مصادر الويب التالية:"]
+            for item in task_state.get("web_sources") or []:
+                lines.append(f"- {item.get('title')} | {item.get('url')}")
+            task_state["final_answer"] = "\n".join(lines)
+    elif task_type == "clarify":
+        task_state["final_answer"] = _direct_answer("أحتاج طلبا أوضح قبل تنفيذ هذا الجزء.", "مخطط سير العمل")
+
+    return {
+        "index": idx,
+        "type": task_type,
+        "title": title,
+        "status": "error" if task_state.get("error") else "ok",
+        "content": (task_state.get("final_answer") or task_state.get("raw_answer") or "").strip(),
+        "quiz": task_state.get("quiz"),
+        "web_sources": task_state.get("web_sources") or [],
+        "error": task_state.get("error"),
+    }
+
+
 def final_composer_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
     sections = state.get("final_sections") or []
@@ -1014,14 +1302,20 @@ def final_composer_node(state: StudyGraphState) -> StudyGraphState:
 
     parts: list[str] = []
     for section in sections:
-        title = str(section.get("title") or section.get("type") or "Section")
+        section_type = str(section.get("type") or "")
+        title = _task_section_title(section_type, str(section.get("title") or "القسم"))
         content = str(section.get("content") or "").strip()
         if section.get("quiz"):
-            content = content or "تم إنشاء الاختبار. اختر الإجابات ثم اضغط Submit."
+            question_count = len((section.get("quiz") or {}).get("questions") or [])
+            content = f"تم إنشاء اختبار تفاعلي من {question_count} أسئلة. اختر الإجابات ثم اضغط زر الإرسال."
         if not content:
             continue
         parts.append(f"# {title}\n{content}")
-    state["final_answer"] = "\n\n".join(parts).strip()
+    composed = "\n\n".join(parts).strip()
+    calculator_section = _calculator_result_section(state, composed)
+    if calculator_section:
+        composed = f"{composed}\n\n# الحساب\n{calculator_section}".strip()
+    state["final_answer"] = composed
     if state.get("quiz"):
         state["next_action"] = "await_quiz_submission"
     else:
@@ -1032,18 +1326,69 @@ def final_composer_node(state: StudyGraphState) -> StudyGraphState:
 
 def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
+    retrieval_breakdown: dict[str, Any] = {
+        "parallel": True,
+        "document_search": {},
+        "web_search": {"enabled": False, "status": "skipped"},
+    }
     try:
         def search_docs():
             from src.tools.document_search_tool import DocumentSearchTool
 
-            top_k = max(TOP_K, 10) if _is_document_overview_query(state.get("user_query", "")) else TOP_K
-            return DocumentSearchTool().search(state.get("user_query", ""), chat_id=state.get("chat_id"), top_k=top_k)
+            top_k = max(TOP_K, 10) if _is_document_summary_request(state.get("user_query", "")) else TOP_K
+            return DocumentSearchTool().search(
+                state.get("user_query", ""),
+                chat_id=state.get("chat_id"),
+                top_k=top_k,
+                bm25_enabled=bool(state.get("bm25_enabled")),
+            )
 
-        result = _run_with_timeout(search_docs, GRAPH_RETRIEVAL_TIMEOUT_SECONDS, "Document retrieval")
+        def search_web():
+            query = _document_grounded_web_query(state)
+            result = WebSearchTool().search(query)
+            return query, result
+
+        jobs: dict[str, Callable[[], Any]] = {"document_search": search_docs}
+        should_search_web = bool(
+            state.get("needs_web")
+            and state.get("web_enabled")
+            and state.get("source_scope") != "Documents only"
+        )
+        if should_search_web:
+            jobs["web_search"] = search_web
+            retrieval_breakdown["web_search"] = {"enabled": True, "status": "running"}
+
+        results: dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=len(jobs)) as executor:
+            futures = {executor.submit(func): name for name, func in jobs.items()}
+            for future in as_completed(futures, timeout=GRAPH_RETRIEVAL_TIMEOUT_SECONDS):
+                name = futures[future]
+                results[name] = future.result()
+
+        result = results["document_search"]
         state["docs"] = result.docs
         state["context"] = result.context
         state.setdefault("timings_ms", {})["document_search_ms"] = result.timing_ms
-        if _is_document_overview_query(state.get("user_query", "")):
+        retrieval_breakdown["document_search"] = result.breakdown
+
+        if "web_search" in results:
+            query, web_result = results["web_search"]
+            state.setdefault("trace", {})["web_search_query"] = query[:1600]
+            state["web_sources"] = web_result.get("results") or []
+            _add_tool(state, "web_search")
+            web_context = "\n\n".join(
+                f"[ويب {idx}]\nTitle: {item.get('title')}\nURL: {item.get('url')}\nProvider: {item.get('provider')}\nSnippet: {item.get('snippet')}"
+                for idx, item in enumerate(state["web_sources"], start=1)
+            )
+            if web_context:
+                state["context"] = f"{state.get('context') or ''}\n\nWEB CONTEXT:\n{web_context}".strip()
+            retrieval_breakdown["web_search"] = {
+                "enabled": True,
+                "status": "ok" if web_result.get("available") else "unavailable",
+                "results": len(state.get("web_sources") or []),
+                "provider": web_result.get("provider"),
+            }
+        if _is_document_summary_request(state.get("user_query", "")):
             sample_context, sample_docs = _sample_uploaded_documents(
                 state.get("chat_id"),
                 max_docs=GRAPH_DOCUMENT_OVERVIEW_PAGES,
@@ -1061,7 +1406,12 @@ def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
         state["docs"] = []
         state["context"] = ""
         state["error"] = str(exc)
+        retrieval_breakdown["error"] = str(exc)
     _add_tool(state, "document_search")
+    if state.get("bm25_enabled"):
+        _add_tool(state, "bm25_search")
+    state["retrieval_breakdown"] = retrieval_breakdown
+    state.setdefault("trace", {})["retrieval_breakdown"] = retrieval_breakdown
 
     if state.get("source_scope") == "Documents only" and not state.get("docs") and state.get("route") != "quiz_generate":
         state["final_answer"] = _direct_answer(
@@ -1086,7 +1436,7 @@ def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
         "Document Search",
         started,
         status="error" if state.get("error") else "ok",
-        output=f"docs={len(state.get('docs') or [])}",
+        output=f"docs={len(state.get('docs') or [])}, bm25={bool(state.get('bm25_enabled'))}, web={retrieval_breakdown.get('web_search', {}).get('status')}",
     )
     return state
 
@@ -1150,7 +1500,10 @@ def _document_grounded_web_query(state: StudyGraphState) -> str:
 
 def web_search_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
-    if state.get("source_scope") == "Documents only" or not state.get("web_enabled"):
+    web_allowed = state.get("source_scope") != "Documents only" and (
+        bool(state.get("web_enabled")) or state.get("source_scope") == "Web only"
+    )
+    if not web_allowed:
         state["web_sources"] = []
         if state.get("route") == "web_search":
             state["final_answer"] = _direct_answer(
@@ -1189,12 +1542,24 @@ def build_prompt_node(state: StudyGraphState) -> StudyGraphState:
     extra = _answer_style_extra(state, route)
     if state.get("route") == "documents_plus_web" or (state.get("route") == "multi_task" and state.get("web_sources")):
         extra = f"{extra}\nUse both uploaded documents and web results. Separate file evidence from web evidence."
-    if route == "summary" and _is_document_overview_query(state.get("user_query", "")):
-        extra = """
+    if route == "summary" and _is_document_summary_request(state.get("user_query", "")):
+        if _has_brief_answer_request(state.get("user_query", "")):
+            extra = """
+Priority override:
+- The user explicitly asked for a very short summary.
+- Do NOT use the study-report template.
+- Answer in exactly two Arabic sentences unless the user asked for a different number.
+- Do not add headings such as الشرح or نقاط للمذاكرة.
+- Add one short source line only if needed, for example: "المصدر: الملف المرفوع."
+- Use only information supported by the retrieved context.
+"""
+        else:
+            extra = """
 This is a document-level explanation request, not a narrow QA request.
-Write a broad study guide from the available pages/chunks. If the available context is only a sample,
-say that the explanation is based on the indexed/extracted parts currently available.
-Do not over-focus on only the highest-similarity chunks.
+Write a grounded study guide from the available pages/chunks only. If the available context is only a sample,
+say that the explanation is based on the indexed/extracted parts currently available. Do not invent a full
+document outline, chapter sequence, design lifecycle, or table entries unless those details appear in the context.
+Prefer concise bullets over long speculative sections.
 """
     state["prompt"] = agent.build_prompt(state.get("user_query", ""), context=state.get("context", ""), extra=extra)
     _record(state, "Build Prompt", started, output=agent.name)
@@ -1204,7 +1569,11 @@ Do not over-focus on only the highest-similarity chunks.
 def tutor_answer_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
     try:
-        state["raw_answer"] = _invoke_llm(state, state.get("prompt") or state.get("user_query", ""))
+        state["raw_answer"] = _invoke_llm(
+            state,
+            state.get("prompt") or state.get("user_query", ""),
+            temperature=ANSWER_LLM_TEMPERATURE,
+        )
     except Exception as exc:
         state["error"] = str(exc)
         state["raw_answer"] = None
@@ -1226,6 +1595,9 @@ def tutor_answer_node(state: StudyGraphState) -> StudyGraphState:
         )
     if state.get("raw_answer"):
         answer = state["raw_answer"]
+        if _execution_route(state) == "summary" and _has_brief_answer_request(state.get("user_query", "")):
+            answer = _brief_two_sentence_answer(answer)
+            state["raw_answer"] = answer
         calculator_section = _calculator_result_section(state, answer)
         state["final_answer"] = f"{answer.rstrip()}\n\n{calculator_section}" if calculator_section else answer
     _record(state, "Tutor Answer", started, status="error" if state.get("error") else "ok", output=state.get("raw_answer", ""))
@@ -1374,7 +1746,7 @@ def _quiz_count_is_valid(quiz: dict[str, Any], query: str) -> bool:
 
 
 def _quiz_created_message(state: StudyGraphState) -> str:
-    message = "تم إنشاء الاختبار. اختر الإجابات ثم اضغط Submit."
+    message = "تم إنشاء الاختبار. اختر الإجابات ثم اضغط زر الإرسال."
     explanation = (state.get("explanation_before_quiz") or "").strip()
     if not explanation:
         return message
@@ -1473,12 +1845,12 @@ CONTEXT:
 {state.get("context") or "No retrieved context. If you must generate from model knowledge, mark source_refs as model."}
 """
     try:
-        answer = _invoke_llm(state, prompt, temperature=0.2)
+        answer = _invoke_llm(state, prompt, temperature=QUIZ_GENERATION_LLM_TEMPERATURE)
         try:
             quiz = _validate_quiz(_json_from_text(answer))
         except Exception:
             repair_prompt = f"{QUIZ_JSON_PROMPT}\nRepair this invalid quiz into valid JSON only:\n{answer}"
-            repaired = _invoke_llm(state, repair_prompt, temperature=0)
+            repaired = _invoke_llm(state, repair_prompt, temperature=QUIZ_REPAIR_LLM_TEMPERATURE)
             quiz = _validate_quiz(_json_from_text(repaired))
         quiz = _validate_quiz(_normalize_quiz_count(quiz, state.get("user_query", ""), state.get("docs") or []))
         if not _quiz_count_is_valid(quiz, state.get("user_query", "")):
@@ -1494,7 +1866,7 @@ CURRENT QUIZ:
 CONTEXT:
 {state.get("context") or ""}
 """
-            repaired = _invoke_llm(state, count_repair_prompt, temperature=0)
+            repaired = _invoke_llm(state, count_repair_prompt, temperature=QUIZ_REPAIR_LLM_TEMPERATURE)
             quiz = _validate_quiz(_json_from_text(repaired))
             if not _quiz_count_is_valid(quiz, state.get("user_query", "")):
                 raise ValueError(f"Quiz model returned {len(quiz.get('questions') or [])} questions instead of {expected}.")
@@ -1543,7 +1915,7 @@ GRADING RESULT:
 {json.dumps(result, ensure_ascii=False)}
 """
     try:
-        feedback_text = _invoke_llm(state, prompt)
+        feedback_text = _invoke_llm(state, prompt, temperature=QUIZ_FEEDBACK_LLM_TEMPERATURE)
     except Exception as exc:
         state["error"] = str(exc)
         feedback_text = _format_feedback_fallback(result)
@@ -1596,7 +1968,7 @@ CONTEXT:
 {state.get("context", "")}
 """
     try:
-        answer = _invoke_llm(state, prompt)
+        answer = _invoke_llm(state, prompt, temperature=STUDY_PLAN_LLM_TEMPERATURE)
     except Exception as exc:
         state["error"] = str(exc)
         answer = _direct_answer("تعذر إنشاء خطة مخصصة من نموذج اللغة الآن.", "حالة نموذج اللغة")
@@ -1633,7 +2005,7 @@ def arabic_guard_node(state: StudyGraphState) -> StudyGraphState:
                     answer,
                     state.get("user_query", ""),
                     get_llm(
-                        temperature=0,
+                        temperature=ARABIC_GUARD_LLM_TEMPERATURE,
                         provider=settings["provider"],
                         model=settings["model"],
                         profile=settings["profile"],
@@ -1656,6 +2028,59 @@ def _skip_quality_agents_for_quiz(state: StudyGraphState) -> bool:
         and state.get("next_action") == "await_quiz_submission"
         and not state.get("final_sections")
     )
+
+
+def _quality_fast_review(state: StudyGraphState, answer: str) -> dict[str, Any]:
+    answer_text = (answer or "").strip()
+    context = state.get("context") or ""
+    docs = state.get("docs") or []
+    answer_tokens = _content_tokens(answer_text)
+    context_tokens = _content_tokens(context)
+    issues: list[str] = []
+
+    if len(answer_text) < 160 and not state.get("tool_result"):
+        issues.append("answer is very short")
+    if not state.get("tool_result") and contains_disallowed_language(answer_text):
+        issues.append("answer may contain too much non-Arabic text")
+    if docs and not any(marker in answer_text for marker in ["# المصدر", "# المصادر", "المصدر", "المصادر", "Source", "Sources"]):
+        issues.append("source section is missing or unclear")
+    if context_tokens and answer_tokens:
+        overlap = len(answer_tokens & context_tokens) / max(len(answer_tokens), 1)
+        if overlap < 0.06 and len(answer_tokens) >= 12:
+            issues.append("answer has weak lexical grounding in retrieved context")
+
+    passed = not issues
+    return {
+        "status": "fast",
+        "mode": "deterministic",
+        "passed": passed,
+        "issues": issues,
+        "improved_answer": answer_text,
+    }
+
+
+def _critic_fast_review(state: StudyGraphState, answer: str) -> dict[str, Any]:
+    review = _quality_fast_review(state, answer)
+    issues = list(review.get("issues") or [])
+    high_risk_terms = ["invented", "guaranteed", "always", "never", "100%", "proves"]
+    lower_answer = (answer or "").lower()
+    if any(term in lower_answer for term in high_risk_terms) and state.get("context"):
+        issues.append("answer includes strong claims that should be checked against context")
+
+    risk_level = "low"
+    if any("weak lexical grounding" in issue for issue in issues):
+        risk_level = "medium"
+    if len(issues) >= 3:
+        risk_level = "medium"
+
+    return {
+        "status": "fast",
+        "mode": "deterministic",
+        "passed": risk_level == "low",
+        "criticism": issues,
+        "risk_level": risk_level,
+        "improved_answer": answer,
+    }
 
 
 def reflection_node(state: StudyGraphState) -> StudyGraphState:
@@ -1686,18 +2111,71 @@ def reflection_node(state: StudyGraphState) -> StudyGraphState:
         _record(state, "Reflection Agent", started, output="empty answer")
         return state
 
+    fast_review = _quality_fast_review(state, answer)
+    if not QUALITY_AGENT_LLM_REVIEW_ENABLED or fast_review.get("passed"):
+        state["reflection_result"] = fast_review
+        state["reflection_checks"] = {"fast": fast_review}
+        state.setdefault("trace", {})["reflection"] = fast_review
+        _record(state, "Reflection Agent", started, output=str(fast_review)[:240])
+        return state
+
     try:
         from src.agents.reflection_agent import ReflectionAgent
 
         state["answer_before_reflection"] = answer
         agent = ReflectionAgent()
-        result = agent.review(
-            state.get("user_query", ""),
-            answer,
-            state.get("context", ""),
-            lambda prompt: _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 60)),
-        )
-        result["status"] = "ok"
+        dimensions = ["fact", "style", "safety"]
+
+        def run_dimension(dimension: str) -> dict[str, Any]:
+            prompt = agent.build_dimension_prompt(
+                dimension,
+                state.get("user_query", ""),
+                answer,
+                state.get("context", ""),
+            )
+            try:
+                payload = _json_from_text(
+                    _invoke_llm(
+                        state,
+                        prompt,
+                        temperature=REFLECTION_LLM_TEMPERATURE,
+                        timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, QUALITY_AGENT_LLM_TIMEOUT_SECONDS),
+                    )
+                )
+                return {
+                    "passed": bool(payload.get("passed")),
+                    "issues": list(payload.get("issues") or []),
+                    "improved_answer": str(payload.get("improved_answer") or answer),
+                }
+            except Exception as exc:
+                return {"passed": True, "issues": [f"{dimension} reflection failed: {exc}"], "improved_answer": answer}
+
+        checks: dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=len(dimensions)) as executor:
+            futures = {executor.submit(run_dimension, dimension): dimension for dimension in dimensions}
+            for future in as_completed(futures):
+                checks[futures[future]] = future.result()
+
+        state["reflection_checks"] = checks
+        passed = all(bool((checks.get(dimension) or {}).get("passed")) for dimension in dimensions)
+        issues: list[str] = []
+        for dimension in dimensions:
+            for issue in (checks.get(dimension) or {}).get("issues") or []:
+                issues.append(f"{dimension}: {issue}")
+        improved = answer
+        # Safety and factual corrections have higher priority than style edits.
+        for dimension in ["style", "fact", "safety"]:
+            candidate = str((checks.get(dimension) or {}).get("improved_answer") or "").strip()
+            if candidate and candidate != answer and not (checks.get(dimension) or {}).get("passed"):
+                improved = candidate
+        result = {
+            "status": "ok",
+            "parallel": True,
+            "passed": passed,
+            "issues": issues,
+            "checks": checks,
+            "improved_answer": improved,
+        }
         improved = str(result.get("improved_answer") or "").strip()
         if improved:
             state["final_answer"] = improved
@@ -1744,6 +2222,13 @@ def critic_node(state: StudyGraphState) -> StudyGraphState:
         _record(state, "Critic Agent", started, output="empty answer")
         return state
 
+    fast_review = _critic_fast_review(state, answer)
+    if not QUALITY_AGENT_LLM_REVIEW_ENABLED or fast_review.get("risk_level") == "low":
+        state["critic_result"] = fast_review
+        state.setdefault("trace", {})["critic"] = fast_review
+        _record(state, "Critic Agent", started, output=str(fast_review)[:240])
+        return state
+
     try:
         from src.agents.critic_agent import CriticAgent
 
@@ -1753,7 +2238,12 @@ def critic_node(state: StudyGraphState) -> StudyGraphState:
             state.get("user_query", ""),
             answer,
             state.get("context", ""),
-            lambda prompt: _invoke_llm(state, prompt, temperature=0, timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, 60)),
+            lambda prompt: _invoke_llm(
+                state,
+                prompt,
+                temperature=CRITIC_LLM_TEMPERATURE,
+                timeout_seconds=min(GRAPH_LLM_TIMEOUT_SECONDS, QUALITY_AGENT_LLM_TIMEOUT_SECONDS),
+            ),
         )
         result["status"] = "ok"
         improved = str(result.get("improved_answer") or "").strip()
@@ -1790,24 +2280,33 @@ def evaluation_node(state: StudyGraphState) -> StudyGraphState:
     answer = state.get("final_answer") or ""
     if state.get("quiz") and state.get("next_action") == "await_quiz_submission" and not state.get("final_sections"):
         answer = json.dumps(state.get("quiz"), ensure_ascii=False)
+    external_enabled = bool(state.get("external_rag_eval_enabled") or AUTOMATIC_EXTERNAL_RAG_EVAL)
     try:
-        deterministic = evaluate_response(
-            query=state.get("user_query", ""),
-            answer=answer,
-            docs=state.get("docs") or [],
-            tools_used=state.get("tools_used") or [],
-            mode="deterministic",
-            web_sources=state.get("web_sources") or [],
-        )
-        rag_bundle = RAGEvaluationService().evaluate(
-            RAGEvaluationInput(
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            deterministic_future = executor.submit(
+                evaluate_response,
                 query=state.get("user_query", ""),
                 answer=answer,
                 docs=state.get("docs") or [],
-                context=state.get("context") or "",
+                tools_used=state.get("tools_used") or [],
+                mode="deterministic",
                 web_sources=state.get("web_sources") or [],
             )
-        )
+            rag_future = executor.submit(
+                RAGEvaluationService(
+                    enable_ragas=external_enabled and ENABLE_RAGAS_EVAL,
+                    enable_deepeval=external_enabled and ENABLE_DEEPEVAL_EVAL,
+                ).evaluate,
+                RAGEvaluationInput(
+                    query=state.get("user_query", ""),
+                    answer=answer,
+                    docs=state.get("docs") or [],
+                    context=state.get("context") or "",
+                    web_sources=state.get("web_sources") or [],
+                ),
+            )
+            deterministic = deterministic_future.result()
+            rag_bundle = rag_future.result()
         state["evaluation"] = {
             "evaluation_id": deterministic.get("evaluation_id") or new_id("eval"),
             "status": deterministic.get("status", "completed"),
@@ -1842,6 +2341,8 @@ def save_trace_node(state: StudyGraphState) -> StudyGraphState:
     trace["planned_tool_calls"] = state.get("planned_tool_calls") or []
     trace["tool_calls"] = state.get("tool_calls") or []
     trace["tool_results"] = state.get("tool_results") or []
+    trace["parallel_agent_results"] = state.get("parallel_agent_results") or []
+    trace["retrieval_breakdown"] = state.get("retrieval_breakdown") or {}
     trace["timings_ms"] = state.get("timings_ms") or {}
     trace["final_answer"] = state.get("final_answer") or ""
     trace["evaluation_result"] = state.get("evaluation")
@@ -1865,14 +2366,18 @@ def save_trace_node(state: StudyGraphState) -> StudyGraphState:
         "task_results": state.get("task_results") or [],
         "final_sections": len(state.get("final_sections") or []),
         "is_multi_task": bool(state.get("is_multi_task")),
+        "parallel_agent_results": len(state.get("parallel_agent_results") or []),
         "planned_tool_calls": state.get("planned_tool_calls") or [],
         "tool_call": state.get("tool_call"),
         "tool_calls": state.get("tool_calls") or [],
         "tool_results": state.get("tool_results") or [],
         "has_tool_result": bool(state.get("tool_result")),
+        "bm25_enabled": bool(state.get("bm25_enabled")),
+        "retrieval_breakdown": state.get("retrieval_breakdown") or {},
         "reflection_enabled": bool(state.get("reflection_enabled")),
         "critic_enabled": bool(state.get("critic_enabled")),
         "has_reflection": bool(state.get("reflection_result")),
+        "reflection_checks": state.get("reflection_checks") or {},
         "has_critic": bool(state.get("critic_result")),
     }
     trace["llm"] = {

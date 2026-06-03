@@ -8,6 +8,7 @@ class StudyGraphState(TypedDict, total=False):
     user_query: str
     source_scope: str
     web_enabled: bool
+    bm25_enabled: bool
     model_profile: str
     llm_provider: str
     llm_model: str
@@ -21,6 +22,7 @@ class StudyGraphState(TypedDict, total=False):
     final_sections: list[dict[str, Any]]
     is_multi_task: bool
     active_task: dict[str, Any] | None
+    parallel_agent_results: list[dict[str, Any]]
     needs_documents: bool
     needs_web: bool
     answer_style: str
@@ -29,6 +31,7 @@ class StudyGraphState(TypedDict, total=False):
     docs: list[dict[str, Any]]
     context: str
     web_sources: list[dict[str, Any]]
+    retrieval_breakdown: dict[str, Any]
 
     tools_used: list[str]
     tool_call: dict[str, Any] | None
@@ -44,6 +47,7 @@ class StudyGraphState(TypedDict, total=False):
     reflection_enabled: bool
     critic_enabled: bool
     reflection_result: dict[str, Any] | None
+    reflection_checks: dict[str, Any]
     critic_result: dict[str, Any] | None
     answer_before_reflection: str | None
     answer_before_critic: str | None
@@ -54,6 +58,7 @@ class StudyGraphState(TypedDict, total=False):
     feedback: dict[str, Any] | None
 
     evaluation: dict[str, Any] | None
+    external_rag_eval_enabled: bool
     trace: dict[str, Any]
     timings_ms: dict[str, int]
 

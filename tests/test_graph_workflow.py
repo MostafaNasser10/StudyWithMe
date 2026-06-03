@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import src.graph.nodes as graph_nodes
+import src.tools.document_search_tool as document_search_module
 from src.graph.app_graph import run_study_graph
 from src.graph.nodes import (
     _fallback_quiz,
@@ -307,6 +308,7 @@ def test_tutor_answer_appends_calculator_result_if_llm_omits_it():
 
 def test_reflection_agent_enabled_updates_answer():
     original = graph_nodes._invoke_llm
+    original_quality_mode = graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED
 
     def fake_llm(state, prompt: str, *args, **kwargs):
         return json.dumps(
@@ -319,6 +321,7 @@ def test_reflection_agent_enabled_updates_answer():
         )
 
     graph_nodes._invoke_llm = fake_llm
+    graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED = True
     try:
         state = reflection_node(
             {
@@ -333,6 +336,7 @@ def test_reflection_agent_enabled_updates_answer():
         )
     finally:
         graph_nodes._invoke_llm = original
+        graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED = original_quality_mode
     assert state["answer_before_reflection"] == "شرح ضعيف"
     assert state["reflection_result"]["passed"] is False
     assert "إجابة محسنة" in state["final_answer"]
@@ -353,6 +357,38 @@ def test_reflection_agent_disabled_leaves_answer():
     assert state["reflection_result"]["status"] == "disabled"
 
 
+def test_quality_agents_fast_mode_does_not_call_llm():
+    original = graph_nodes._invoke_llm
+    original_quality_mode = graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED
+
+    def fail_if_called(state, prompt: str, *args, **kwargs):
+        raise AssertionError("quality fast mode should not call the LLM")
+
+    graph_nodes._invoke_llm = fail_if_called
+    graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED = False
+    try:
+        state = {
+            "chat_id": "test",
+            "user_query": "اشرح RAG",
+            "final_answer": "# الإجابة\nRAG uses retrieval.\n\n# المصدر\nlecture.pdf",
+            "context": "RAG uses retrieval.",
+            "docs": [{"snippet": "RAG uses retrieval.", "source_name": "lecture.pdf"}],
+            "reflection_enabled": True,
+            "critic_enabled": True,
+            "trace": {},
+            "timings_ms": {},
+        }
+        reflected = reflection_node(dict(state))
+        criticized = critic_node(dict(state))
+    finally:
+        graph_nodes._invoke_llm = original
+        graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED = original_quality_mode
+
+    assert reflected["reflection_result"]["status"] == "fast"
+    assert criticized["critic_result"]["status"] == "fast"
+    assert criticized["critic_result"]["risk_level"] == "low"
+
+
 def test_critic_agent_disabled_leaves_answer():
     state = critic_node(
         {
@@ -370,6 +406,7 @@ def test_critic_agent_disabled_leaves_answer():
 
 def test_critic_agent_improves_medium_risk_answer():
     original = graph_nodes._invoke_llm
+    original_quality_mode = graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED
 
     def fake_llm(state, prompt: str, *args, **kwargs):
         return json.dumps(
@@ -383,6 +420,7 @@ def test_critic_agent_improves_medium_risk_answer():
         )
 
     graph_nodes._invoke_llm = fake_llm
+    graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED = True
     try:
         state = critic_node(
             {
@@ -397,6 +435,7 @@ def test_critic_agent_improves_medium_risk_answer():
         )
     finally:
         graph_nodes._invoke_llm = original
+        graph_nodes.QUALITY_AGENT_LLM_REVIEW_ENABLED = original_quality_mode
     assert state["critic_result"]["risk_level"] == "medium"
     assert "إجابة مصححة" in state["final_answer"]
 
@@ -534,6 +573,8 @@ def test_graph_calculator_uses_llm_tool_selection():
     assert state["tool_result"]["result"]["result"] == 84
     assert "function:calculator" in state["tools_used"]
     assert "84" in state["final_answer"]
+    assert state["evaluation"]["status"] == "completed"
+    assert state["trace"]["evaluation_result"]["evaluation_id"] == state["evaluation"]["evaluation_id"]
 
 
 def test_graph_quiz_path_returns_valid_quiz_object():
@@ -556,6 +597,7 @@ def test_graph_quiz_path_returns_valid_quiz_object():
     assert state["route"] == "quiz_generate"
     assert state.get("quiz") is None
     assert state["next_action"] == "final"
+    assert state["evaluation"]["status"] == "completed"
     assert "لا أستطيع إنشاء اختبار" in state["final_answer"]
 
 
@@ -578,6 +620,46 @@ def test_graph_garbage_path_does_not_retrieve_docs():
     assert "أحتاج طلبا أوضح" in state["final_answer"]
 
 
+def test_document_search_can_merge_vector_and_bm25_parallel_branches():
+    class FakeChunk:
+        def __init__(self, text: str, source: str):
+            self.page_content = text
+            self.metadata = {"source": source, "page": 1}
+
+    class FakeDocstore:
+        def __init__(self, docs):
+            self._dict = {str(idx): doc for idx, doc in enumerate(docs)}
+
+    class FakeVectorStore:
+        def __init__(self):
+            self.vector_doc = FakeChunk("semantic vector hit", "vector.pdf")
+            self.bm25_doc = FakeChunk("exact lexical bm25 hit", "bm25.pdf")
+            self.docstore = FakeDocstore([self.vector_doc, self.bm25_doc])
+
+        def similarity_search_with_score(self, query, k):
+            return [(self.vector_doc, 0.1)]
+
+        def similarity_search(self, query, k):
+            return [self.vector_doc]
+
+    original_store = document_search_module.get_vector_store
+    try:
+        document_search_module.get_vector_store = lambda chat_id=None: FakeVectorStore()
+        result = document_search_module.DocumentSearchTool().search(
+            "lexical query",
+            chat_id="test",
+            top_k=4,
+            bm25_enabled=True,
+        )
+    finally:
+        document_search_module.get_vector_store = original_store
+
+    assert len(result.docs) == 2
+    assert result.breakdown["parallel"] is True
+    assert result.breakdown["counts"]["vector"] == 1
+    assert result.breakdown["counts"]["bm25"] == 1
+
+
 if __name__ == "__main__":
     test_router_uses_llm_planner_routes()
     test_planner_can_return_tasks_and_tools_together()
@@ -594,6 +676,7 @@ if __name__ == "__main__":
     test_tutor_answer_appends_calculator_result_if_llm_omits_it()
     test_reflection_agent_enabled_updates_answer()
     test_reflection_agent_disabled_leaves_answer()
+    test_quality_agents_fast_mode_does_not_call_llm()
     test_critic_agent_disabled_leaves_answer()
     test_critic_agent_improves_medium_risk_answer()
     test_quality_agents_skip_structured_quiz_waiting_state()
@@ -605,4 +688,5 @@ if __name__ == "__main__":
     test_graph_calculator_uses_llm_tool_selection()
     test_graph_quiz_path_returns_valid_quiz_object()
     test_graph_garbage_path_does_not_retrieve_docs()
+    test_document_search_can_merge_vector_and_bm25_parallel_branches()
     print("graph workflow tests passed")

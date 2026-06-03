@@ -125,6 +125,92 @@ def test_deepeval_missing_api_key_returns_unavailable():
     assert result["deepeval"]["status"] == "unavailable"
 
 
+def test_nan_metric_scores_are_normalized_to_zero():
+    assert rag_eval._normalize_score(float("nan")) == 0.0
+    assert rag_eval._normalize_score(float("inf")) == 0.0
+
+
+def test_contradictory_ragas_scores_are_marked_unreliable():
+    ragas = {
+        "status": "ok",
+        "provider": "ragas",
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 1.0,
+        "context_recall": 0.82,
+    }
+    deepeval = {
+        "status": "ok",
+        "provider": "deepeval",
+        "relevance": 0.92,
+        "hallucination": 0.0,
+    }
+    result = rag_eval._reconcile_ragas_with_deepeval(
+        ragas,
+        deepeval,
+        "What is RAG?",
+        "RAG retrieves relevant context before generating an answer.",
+        ["Retrieval augmented generation answers questions by retrieving relevant context before generation."],
+    )
+    assert result["status"] == "unreliable"
+    assert result["raw_scores"]["context_precision"] == 1.0
+
+
+def test_full_answer_evidence_keeps_source_section_after_judge_trim():
+    result = {
+        "status": "ok",
+        "provider": "deepeval",
+        "helpfulness": 0.7,
+    }
+    full_answer = "RAG retrieves context before answering.\n\n# المصادر\n- lecture.pdf، الصفحة 1"
+    updated = rag_eval._attach_full_answer_evidence(
+        result,
+        "Explain RAG.",
+        full_answer,
+        ["Retrieval augmented generation answers questions by retrieving relevant context before generation."],
+    )
+    assert updated["evidence"]["helpfulness"]["has_source_section"] is True
+
+
+def test_arabic_detection_for_external_translation():
+    assert rag_eval._contains_arabic("اشرح الملف") is True
+    assert rag_eval._contains_arabic("Explain the file") is False
+
+
+def test_disabled_external_eval_does_not_translate_arabic_answer():
+    service = RAGEvaluationService(enable_ragas=False, enable_deepeval=False)
+    result = service.evaluate(
+        RAGEvaluationInput(
+            query="اشرح الملف",
+            answer="حسب المقاطع المتاحة، يتناول الملف أنظمة مدمجة.",
+            docs=_sample_docs(),
+        )
+    )
+    assert result["ragas"]["status"] == "disabled"
+    assert result["deepeval"]["status"] == "disabled"
+
+
+def test_evidence_can_use_english_judge_answer_with_arabic_source_section():
+    result = {
+        "status": "ok",
+        "provider": "ragas",
+        "faithfulness": 0.8,
+    }
+    updated = rag_eval._attach_evaluation_metadata(
+        result,
+        "Explain the file.",
+        "The file discusses embedded computer systems and design standards.",
+        "حسب المقاطع المتاحة، يتناول الملف أنظمة الحاسوب المدمجة.\n\n# المصادر\n- lecture.pdf، الصفحة 1",
+        [
+            "Introduction to Embedded Systems. The file discusses embedded computer systems and standards used in embedded systems design."
+        ],
+        {"translated": True, "status": "ok", "evaluation_language": "english"},
+    )
+    assert updated["evaluation_language"] == "english"
+    assert updated["evidence"]["faithfulness"]["supported_snippets"]
+    assert updated["evidence"]["helpfulness"]["has_source_section"] is True
+
+
 if __name__ == "__main__":
     test_good_grounded_answer_disabled_external_evaluators()
     test_answer_with_no_retrieved_docs_returns_safe_ragas_status()
@@ -134,4 +220,10 @@ if __name__ == "__main__":
     test_summary_answer_is_supported_as_text_payload()
     test_metric_evidence_mentions_response_snippets_when_enabled_but_no_api_key()
     test_deepeval_missing_api_key_returns_unavailable()
+    test_nan_metric_scores_are_normalized_to_zero()
+    test_contradictory_ragas_scores_are_marked_unreliable()
+    test_full_answer_evidence_keeps_source_section_after_judge_trim()
+    test_arabic_detection_for_external_translation()
+    test_disabled_external_eval_does_not_translate_arabic_answer()
+    test_evidence_can_use_english_judge_answer_with_arabic_source_section()
     print("rag evaluation service tests passed")

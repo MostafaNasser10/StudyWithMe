@@ -8,6 +8,7 @@ from src.chat.chat_models import new_id, now_iso
 from src.evaluation.code_evaluators import deterministic_checks
 from src.evaluation.gold_standard import grade_against_gold
 from src.evaluation.rubric import RUBRIC_STANDARDS
+from src.config import EVALUATOR_SAME_LLM_TEMPERATURE
 
 
 @dataclass
@@ -161,7 +162,7 @@ def evaluate_response(
             else:
                 from src.llm import get_llm
 
-                judge_llm = get_llm(temperature=0)
+                judge_llm = get_llm(temperature=EVALUATOR_SAME_LLM_TEMPERATURE)
                 llm_judge = {"mode": "same LLM"}
 
             if llm_judge and "status" not in llm_judge:

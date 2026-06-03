@@ -41,6 +41,10 @@ def _is_allowed_latin_word(word: str) -> bool:
     normalized = word.lower().strip("_+-.")
     if normalized in ALLOWED_LATIN_TERMS:
         return True
+    if normalized.startswith("file_"):
+        return True
+    if normalized.endswith((".pdf", ".docx", ".txt", ".csv", ".md")):
+        return True
     if word.isupper() and 2 <= len(word) <= 12:
         return True
     if any(char.isdigit() for char in word) and len(word) <= 16:

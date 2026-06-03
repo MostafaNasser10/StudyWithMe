@@ -7,13 +7,15 @@ from src.document_processing.image_extractor import extract_images
 from src.document_processing.ocr import run_ocr
 from src.document_processing.table_extractor import extract_tables
 
-try:
-    from langchain_community.document_loaders import CSVLoader, Docx2txtLoader, PyPDFLoader, TextLoader
-except ImportError:
-    CSVLoader = None
-    Docx2txtLoader = None
-    PyPDFLoader = None
-    TextLoader = None
+
+def _loader_class(name: str):
+    """Import heavy LangChain document loaders only when that file type is used."""
+
+    try:
+        from langchain_community import document_loaders
+    except ImportError:
+        return None
+    return getattr(document_loaders, name, None)
 
 
 def _chat_docs_dir(chat_id: str | None) -> Path:
@@ -23,6 +25,7 @@ def _chat_docs_dir(chat_id: str | None) -> Path:
 
 
 def _load_text(path: Path) -> list[Document]:
+    TextLoader = _loader_class("TextLoader")
     if TextLoader is not None:
         for encoding in ("utf-8", "utf-8-sig", "cp1256", "latin-1"):
             try:
@@ -34,6 +37,7 @@ def _load_text(path: Path) -> list[Document]:
 
 
 def _load_docx(path: Path) -> list[Document]:
+    Docx2txtLoader = _loader_class("Docx2txtLoader")
     if Docx2txtLoader is not None:
         try:
             return Docx2txtLoader(str(path)).load()
@@ -58,10 +62,12 @@ def load_file(path: str | Path) -> list[Document]:
         return []
 
     if suffix == ".pdf":
+        PyPDFLoader = _loader_class("PyPDFLoader")
         if PyPDFLoader is None:
             raise RuntimeError("Install pypdf and langchain-community to parse PDF files.")
         loaded_docs = PyPDFLoader(str(file_path)).load()
     elif suffix == ".csv":
+        CSVLoader = _loader_class("CSVLoader")
         if CSVLoader is not None:
             loaded_docs = CSVLoader(str(file_path), encoding="utf-8").load()
         else:
@@ -71,13 +77,17 @@ def load_file(path: str | Path) -> list[Document]:
     else:
         loaded_docs = _load_text(file_path)
 
+    ocr_result = run_ocr(file_path).__dict__
+    image_result = extract_images(file_path).__dict__
+    table_result = extract_tables(file_path).__dict__
+
     for doc in loaded_docs:
         doc.metadata["source"] = str(file_path)
         doc.metadata["file_name"] = file_path.name
         doc.metadata["file_type"] = suffix
-        doc.metadata["ocr"] = run_ocr(file_path).__dict__
-        doc.metadata["image_extraction"] = extract_images(file_path).__dict__
-        doc.metadata["table_extraction"] = extract_tables(file_path).__dict__
+        doc.metadata["ocr"] = ocr_result
+        doc.metadata["image_extraction"] = image_result
+        doc.metadata["table_extraction"] = table_result
 
     return loaded_docs
 

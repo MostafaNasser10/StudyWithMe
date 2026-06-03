@@ -6,8 +6,10 @@ except ImportError:
 from src.config import (
     EVALUATOR_LLM_TEMPERATURE,
     EVALUATOR_OLLAMA_MODEL,
+    LLM_DEFAULT_TEMPERATURE,
     LLM_PROVIDER,
     LLM_REQUEST_TIMEOUT_SECONDS,
+    LLM_STREAM_TEMPERATURE,
     MODEL_PROFILE_GPT4O_MINI,
     MODEL_PROFILE_LOCAL,
     MODEL_PROFILES,
@@ -51,7 +53,7 @@ def model_is_configured(provider: str | None = None) -> tuple[bool, str]:
 
 
 def get_llm(
-    temperature: float = 0.3,
+    temperature: float | None = None,
     model: str | None = None,
     provider: str | None = None,
     profile: str | None = None,
@@ -65,6 +67,7 @@ def get_llm(
     """
 
     settings = resolve_model_profile(profile=profile, provider=provider, model=model)
+    resolved_temperature = LLM_DEFAULT_TEMPERATURE if temperature is None else temperature
     if settings["provider"] == "openai":
         ok, message = model_is_configured("openai")
         if not ok:
@@ -76,12 +79,12 @@ def get_llm(
 
         return ChatOpenAI(
             model=settings["model"],
-            temperature=temperature,
+            temperature=resolved_temperature,
             timeout=timeout_seconds or LLM_REQUEST_TIMEOUT_SECONDS,
             api_key=OPENAI_API_KEY,
         )
 
-    return ChatOllama(model=settings["model"], temperature=temperature)
+    return ChatOllama(model=settings["model"], temperature=resolved_temperature)
 
 
 def get_evaluator_llm():
@@ -92,8 +95,8 @@ def get_evaluator_llm():
     )
 
 
-def stream_llm(prompt: str, temperature: float = 0.3):
-    llm = get_llm(temperature=temperature)
+def stream_llm(prompt: str, temperature: float | None = None):
+    llm = get_llm(temperature=LLM_STREAM_TEMPERATURE if temperature is None else temperature)
     if hasattr(llm, "stream"):
         for chunk in llm.stream(prompt):
             content = getattr(chunk, "content", str(chunk))

@@ -12,36 +12,29 @@ Source rules:
 - عند استخدام الملفات اذكر اسم الملف ورقم الصفحة إن وجد ورقم السطر إن وجد.
 - عند استخدام الويب اذكر عنوان المصدر والرابط إن وجد.
 - لا تخترع صفحة أو سطر أو رابط غير موجود في البيانات.
+- اكتب قسم مصادر واضح بعنوان "# المصادر" أو "# المراجع المستخدمة" في نهاية الإجابة عندما تستخدم ملفات أو ويب.
 """
 
 STUDY_WITH_ME_STRUCTURE = """
-اكتب الإجابة التعليمية العادية بهذه البنية:
+اكتب الإجابة التعليمية العادية بهذه البنية المختصرة:
 
-# تقرير مذاكرة
-اكتب عنوانا قصيرا مناسبا لموضوع السؤال.
+# الإجابة
+أجب عن السؤال مباشرة في فقرة قصيرة مبنية على السياق المتاح.
 
-## 1. الفكرة الكبيرة
-ابدأ بفقرة ودودة من 4 إلى 6 أسطر تشرح الفكرة العامة كأنك تهيئ الطالب قبل المذاكرة.
+## الشرح
+اشرح فقط النقاط المدعومة بالسياق. إذا كان السياق جزئيا، قل: "حسب المقاطع المتاحة". لا تفترض بنية الملف أو فصوله أو دورة تصميم كاملة إلا إذا ظهرت صراحة في السياق.
 
-## 2. الشرح خطوة بخطوة
-اشرح المفهوم بترتيب منطقي. استخدم فقرات قصيرة وعناوين فرعية عند الحاجة. لا تجعل القسم كله نقاطا متتابعة.
+## نقاط للمذاكرة
+اكتب 3 إلى 5 نقاط مركزة من المعلومات المدعومة.
 
-## 3. مثال تطبيقي كقصة
-اكتب مثالا تعليميا كاملا: طالب لديه مشكلة، كيف يفكر، ماذا يطبق، وما النتيجة. المثال يجب أن يكون مفهوما حتى لو لم يقرأ الطالب المصدر.
+## المصادر
+اذكر أسماء الملفات/الصفحات أو قل بوضوح إن الإجابة من النموذج عند عدم وجود مصادر.
 
-## 4. نقاط مهمة للمذاكرة
-اكتب أهم النقاط في قائمة قصيرة ومنظمة.
-
-## 5. الدليل من المصادر
-اربط أهم الأفكار بالمصادر المتاحة دون إغراق الطالب بقائمة طويلة. اذكر الملف والصفحة عند وجودهما.
-
-## 6. الخلاصة السريعة
-اختم بخمس نقاط مركزة تصلح للمراجعة قبل الاختبار.
-
-تنسيق مهم:
+قيود مهمة:
 - لا تخلط اتجاهات الكتابة داخل السطر قدر الإمكان.
 - اجعل المصطلحات الإنجليزية القصيرة مثل RAG وLLM داخل الجملة العربية فقط عند الحاجة.
-- اكتب بأسلوب تقرير دراسة منظم: فقرات واضحة، عناوين هادئة، وجداول فقط عندما تكون مفيدة.
+- لا تستخدم الجداول إلا إذا طلبها المستخدم أو اكتملت كل خلاياها.
+- لا تضف قصة أو مثال تطبيقي إلا إذا طلب المستخدم مثالا.
 """
 
 RAG_SYSTEM_PROMPT = f"""
@@ -54,6 +47,8 @@ Rules:
 - Do not invent sources, page numbers, links, paper names, or definitions.
 - If retrieved context is weak or missing, say so clearly and separate model knowledge from sourced evidence.
 - The answer must be structured, readable, and useful for studying.
+- For vague requests such as "explain file", summarize only what the retrieved snippets prove. Do not infer the full document outline from a few chunks.
+- Every factual paragraph should be traceable to the provided context or explicitly labeled as general background.
 
 {ARABIC_OUTPUT_RULES}
 {SOURCE_RULES}
@@ -111,7 +106,7 @@ Return this structure:
 
 SUMMARY_PROMPT = f"""
 You are an expert Arabic study-guide writer. The user may ask to explain or summarize a full uploaded document.
-Your job is not to answer from only one paragraph. Build a useful document-level explanation from the available context.
+Your job is to build a useful document-level explanation from the available context without pretending the unseen parts were retrieved.
 
 Write in Arabic markdown as a friendly study report with this exact structure:
 
@@ -119,20 +114,19 @@ Running title:
 # تقرير مذاكرة عن الملف
 
 ## 1. نظرة عامة على الملف
-اكتب فقرة من 5 إلى 8 أسطر تشرح موضوع الملف، لماذا هو مهم، وما المشكلة أو الفكرة الكبيرة التي يدور حولها.
+اكتب فقرة قصيرة تشرح ما تؤكده المقاطع المتاحة عن موضوع الملف. ابدأ بعبارة مثل: "حسب المقاطع المتاحة من الملف..." إذا كان السياق عينة فقط.
 
 ## 2. خريطة المحتوى
-قسم الملف إلى محاور دراسية واضحة. لكل محور: العنوان، الفكرة، ولماذا يحتاج الطالب إلى فهمها.
+اعرض فقط المحاور التي تظهر صراحة في المقاطع. لا تذكر "الفصل الأول" أو "الفصل الثاني" أو ترتيب الملف إلا إذا ظهر ذلك في السياق.
 
 ## 3. الشرح التفصيلي
 اشرح المحاور بترتيب منطقي كأنك تشرح لطالب قبل الامتحان. استخدم فقرات مترابطة، وليس قائمة جافة فقط.
 
 ## 4. المفاهيم والمصطلحات المهمة
-اعرض المصطلحات الأساسية في جدول عربي: المصطلح، معناه، ودوره داخل الملف.
+اعرض المصطلحات الأساسية في قائمة أو جدول قصير. إذا استخدمت جدولا، يجب أن تكون كل الخلايا مكتملة.
 
 ## 5. مثال تطبيقي كامل
-اكتب قصة تعليمية واقعية من البداية للنهاية توضح كيف تُستخدم الفكرة الرئيسية في موقف عملي. يجب أن يحتوي المثال على:
-المشكلة، طريقة التفكير، خطوات الحل، والنتيجة.
+اكتب مثالا قصيرا فقط إذا كان مفيدا، ووضحه كـ "مثال تعليمي غير مقتبس من الملف". لا تجعله يبدو كأنه معلومة من المصدر.
 
 ## 6. ماذا تذاكر أولا
 رتب 5 إلى 8 نقاط حسب الأولوية.
@@ -146,6 +140,9 @@ Running title:
 Quality rules:
 - If the context is partial, say clearly that the explanation is based on the available indexed/extracted parts.
 - Do not invent chapter names, page numbers, claims, or results that are not supported by context.
+- Do not claim a complete file structure unless the retrieved context shows it.
+- Avoid broad generic claims unless they are tied to a source snippet or labeled as background.
+- Finish every table/list completely; if unsure, use short bullets instead of a table.
 - Keep one clear Arabic reading direction. Avoid English bullet-heavy phrasing.
 - Prefer full Arabic explanation over copying source text.
 

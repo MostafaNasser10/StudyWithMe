@@ -56,15 +56,28 @@ def execute_registered_tool(tool_name: str, arguments: dict[str, Any], state: di
     if tool_name == "document_search":
         query = str(arguments.get("query") or state.get("user_query") or "")
         top_k = int(arguments.get("top_k") or TOP_K)
-        result = DocumentSearchTool().search(query, chat_id=state.get("chat_id"), top_k=top_k)
+        result = DocumentSearchTool().search(
+            query,
+            chat_id=state.get("chat_id"),
+            top_k=top_k,
+            bm25_enabled=bool(state.get("bm25_enabled")),
+        )
         return {
             "ok": True,
             "useful": bool(result.docs),
-            "result": {"context": result.context, "docs": result.docs, "timing_ms": result.timing_ms},
+            "result": {
+                "context": result.context,
+                "docs": result.docs,
+                "timing_ms": result.timing_ms,
+                "breakdown": result.breakdown,
+            },
         }
 
     if tool_name == "web_search":
-        if state.get("source_scope") == "Documents only" or not state.get("web_enabled"):
+        web_allowed = state.get("source_scope") != "Documents only" and (
+            bool(state.get("web_enabled")) or state.get("source_scope") == "Web only"
+        )
+        if not web_allowed:
             return {
                 "ok": False,
                 "useful": False,

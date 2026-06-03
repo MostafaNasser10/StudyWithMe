@@ -50,6 +50,40 @@ ANSWER TO REVIEW:
 {answer[:7000]}
 """
 
+    def build_dimension_prompt(self, dimension: str, query: str, answer: str, context: str) -> str:
+        checks = {
+            "fact": "Focus only on factual grounding, source use, missing evidence, and unsupported claims.",
+            "style": "Focus only on Arabic quality, beginner friendliness, structure, and study usefulness.",
+            "safety": "Focus only on whether the answer follows the user request, avoids unsafe assumptions, and refuses unsupported work correctly.",
+        }
+        return f"""
+You are one parallel reviewer inside the StudyWithMe Reflection Agent.
+
+Return valid JSON only. Do not use markdown outside JSON.
+
+DIMENSION:
+{dimension}
+
+CHECK INSTRUCTIONS:
+{checks.get(dimension, checks["fact"])}
+
+Required JSON:
+{{
+  "passed": true,
+  "issues": [],
+  "improved_answer": "..."
+}}
+
+USER REQUEST:
+{query}
+
+RETRIEVED CONTEXT:
+{context[:3500] or "No context."}
+
+ANSWER TO REVIEW:
+{answer[:6000]}
+"""
+
     def review(self, query: str, answer: str, context: str, invoke_text: Callable[[str], str]) -> dict[str, Any]:
         try:
             raw = invoke_text(self.build_prompt(query, answer, context))

@@ -79,6 +79,19 @@ def context_from_results(results) -> str:
 
 
 def append_sources_section(answer: str, docs: list[dict], web_sources: list[dict] | None = None) -> str:
+    if any(
+        marker in (answer or "")
+        for marker in (
+            "# المصادر",
+            "# المصدر",
+            "# المراجع",
+            "# المراجع المستخدمة",
+            "# الدليل من الملف",
+            "# الدليل من المصادر",
+        )
+    ):
+        return answer.rstrip()
+
     lines = []
     if docs:
         lines.extend(["", "---", "", "# المراجع المستخدمة"])
