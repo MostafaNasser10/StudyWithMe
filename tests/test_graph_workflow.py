@@ -164,6 +164,60 @@ def test_arabic_explain_my_file_repairs_bad_clarify_plan():
     assert state["planned_tool_calls"][0]["tool_name"] == "document_search"
 
 
+def test_arabic_explain_fayl_repairs_bad_clarify_plan():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+        needs_documents=True,
+        tool_calls=[{"tool_name": "none", "arguments": {}, "reasoning": "Bad planner choice"}],
+    )
+    original = _with_fake_llm(planner)
+    try:
+        state = router_node({"chat_id": "test", "user_query": "اشرحلي الفايل", "source_scope": "Documents only", "web_enabled": False})
+    finally:
+        _restore_llm(original)
+    assert state["route"] == "summary"
+    assert state["selected_agent"] == "Summary"
+    assert state["needs_documents"] is True
+    assert state["planned_tool_calls"][0]["tool_name"] == "document_search"
+
+
+def test_file_request_falls_back_when_planner_llm_fails():
+    original = graph_nodes._invoke_llm
+
+    def failing_llm(state, prompt: str, *args, **kwargs):
+        raise RuntimeError("planner unavailable")
+
+    graph_nodes._invoke_llm = failing_llm
+    try:
+        state = router_node({"chat_id": "test", "user_query": "اشرحلي الفايل", "source_scope": "Documents only", "web_enabled": False})
+    finally:
+        _restore_llm(original)
+    assert state["route"] == "summary"
+    assert state["selected_agent"] == "Summary"
+    assert state["planned_tool_calls"][0]["tool_name"] == "document_search"
+
+
+def test_arabic_calculator_repairs_bad_clarify_plan():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+        tool_calls=[{"tool_name": "none", "arguments": {}, "reasoning": "Bad planner choice"}],
+    )
+    original = _with_fake_llm(planner)
+    try:
+        state = router_node({"chat_id": "test", "user_query": "احسب 4*7", "source_scope": "Documents only", "web_enabled": False})
+    finally:
+        _restore_llm(original)
+    assert state["route"] == "tutor_rag"
+    assert [task["type"] for task in state["tasks"]] == ["explain"]
+    assert state["needs_documents"] is False
+    assert state["planned_tool_calls"][0]["tool_name"] == "calculator"
+    assert state["planned_tool_calls"][0]["arguments"]["expression"] == "4*7"
+
+
 def test_web_only_file_explanation_stays_clarify():
     planner = _planner_json(
         "clarify",
@@ -666,6 +720,9 @@ if __name__ == "__main__":
     test_documents_only_blocks_web_route_and_tool()
     test_clear_file_explanation_repairs_bad_clarify_plan()
     test_arabic_explain_my_file_repairs_bad_clarify_plan()
+    test_arabic_explain_fayl_repairs_bad_clarify_plan()
+    test_file_request_falls_back_when_planner_llm_fails()
+    test_arabic_calculator_repairs_bad_clarify_plan()
     test_web_only_file_explanation_stays_clarify()
     test_documents_plus_web_search_uses_document_context()
     test_documents_plus_web_file_request_forces_document_grounded_web_step()

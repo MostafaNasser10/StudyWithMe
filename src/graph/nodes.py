@@ -752,11 +752,16 @@ def _planner_decision_from_payload(
     text = (query or "").lower()
     arithmetic_expression = _extract_arithmetic_expression(query)
     quiz_requested = _has_quiz_intent(text)
-    if source_scope != "Web only" and _is_document_summary_request(query):
+    document_summary_requested = source_scope != "Web only" and _is_document_summary_request(query)
+    if document_summary_requested:
         decision.route = "summary"
         decision.tasks = [
             _task("summary", _task_section_title("summary")),
-            *[task for task in decision.tasks if str(task.get("type") or "") not in {"explain", "summary"}],
+            *[
+                task
+                for task in decision.tasks
+                if str(task.get("type") or "") not in {"explain", "summary", "clarify"}
+            ],
         ]
         decision.selected_agent = "Summary"
         decision.needs_documents = True
@@ -782,12 +787,19 @@ def _planner_decision_from_payload(
 
     if arithmetic_expression:
         if not quiz_requested:
-            decision.tasks = [task for task in decision.tasks if str(task.get("type") or "") != "quiz_generate"]
-            if decision.route == "quiz_generate":
+            decision.tasks = [
+                task
+                for task in decision.tasks
+                if str(task.get("type") or "") not in {"quiz_generate", "clarify"}
+            ]
+            if decision.route in {"quiz_generate", "clarify"}:
                 decision.route = "tutor_rag"
                 decision.selected_agent = "RAG Tutor"
+                decision.needs_documents = bool(document_summary_requested)
+                decision.needs_web = False
+                decision.answer_style = "direct"
             if not decision.tasks:
-                decision.tasks = [_task("explain", "الإجابة")]
+                decision.tasks = [_task("explain", _task_section_title("explain"))]
         if not any(call.tool_name == "calculator" for call in decision.tool_calls):
             decision.tool_calls = [
                 ToolCallRequest(
@@ -844,14 +856,26 @@ HAS SUBMITTED QUIZ ANSWERS:
         decision = _planner_decision_from_payload(_json_from_text(raw), state.get("user_query", ""), source_scope, web_enabled)
     except Exception as exc:
         state["error"] = str(exc)
-        decision = PlannerDecision(
-            route="clarify",
-            tasks=[_task("clarify", "تعذر التخطيط")],
-            selected_agent="Input Guard",
-            needs_documents=False,
-            needs_web=False,
-            answer_style="direct",
-            tool_calls=[ToolCallRequest(tool_name="none", arguments={}, reasoning="Planner LLM failed.")],
+        fallback_payload = {
+            "route": "clarify",
+            "tasks": [_task("clarify", "تعذر التخطيط")],
+            "selected_agent": "Input Guard",
+            "needs_documents": False,
+            "needs_web": False,
+            "answer_style": "direct",
+            "tool_calls": [
+                {
+                    "tool_name": "none",
+                    "arguments": {},
+                    "reasoning": "Planner LLM failed.",
+                }
+            ],
+        }
+        decision = _planner_decision_from_payload(
+            fallback_payload,
+            state.get("user_query", ""),
+            source_scope,
+            web_enabled,
         )
 
     route = decision.route
