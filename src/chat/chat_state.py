@@ -1,3 +1,5 @@
+"""Streamlit session-state helpers for the chat workspace."""
+
 import streamlit as st
 
 from src.chat.chat_store import ChatStore
@@ -6,10 +8,31 @@ from src.config import DEFAULT_BM25_SEARCH_ENABLED, DEFAULT_EVALUATION_MODE, DEF
 
 @st.cache_resource(show_spinner=False)
 def get_store() -> ChatStore:
+    """Return the cached JSON-backed chat store.
+
+    Returns:
+        Shared ``ChatStore`` instance for the Streamlit session.
+
+    Example:
+        >>> store = get_store()
+        >>> hasattr(store, "ensure_chat")
+        True
+    """
+
     return ChatStore()
 
 
 def init_session_state() -> None:
+    """Initialize Streamlit session defaults used by the app.
+
+    Side effects:
+        Mutates ``st.session_state`` with page, model, retrieval, memory, and
+        evaluation defaults.
+
+    Example:
+        >>> init_session_state()
+    """
+
     st.session_state.setdefault("active_chat_id", None)
     st.session_state.setdefault("page", "Home")
     st.session_state.setdefault("source_scope", "Documents only")

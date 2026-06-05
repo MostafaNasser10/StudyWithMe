@@ -146,6 +146,167 @@ def test_clear_file_explanation_repairs_bad_clarify_plan():
     assert state["planned_tool_calls"][0]["tool_name"] == "document_search"
 
 
+def test_follow_up_clarification_uses_recent_memory():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+    )
+    original = _with_fake_llm(planner)
+    original_memory_loader = graph_nodes.load_recent_message_records
+    graph_nodes.load_recent_message_records = lambda chat_id, limit=10: [
+        {"role": "user", "content": "اشرح RAG", "metadata": {}},
+        {"role": "assistant", "content": "RAG combines retrieval with generation.", "metadata": {"route": "tutor_rag"}},
+    ]
+    try:
+        state = router_node(
+            {
+                "chat_id": "test",
+                "user_query": "لم افهم",
+                "source_scope": "Documents only",
+                "web_enabled": False,
+            }
+        )
+    finally:
+        graph_nodes.load_recent_message_records = original_memory_loader
+        _restore_llm(original)
+
+    assert state["route"] == "tutor_rag"
+    assert state["selected_agent"] == "RAG Tutor"
+    assert state["tasks"][0]["type"] == "explain"
+    assert state["needs_documents"] is False
+    assert state["next_action"] is None
+
+
+def test_general_knowledge_question_repairs_bad_clarify_plan():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+        tool_calls=[{"tool_name": "none", "arguments": {}, "reasoning": "Bad planner choice"}],
+    )
+    original = _with_fake_llm(planner)
+    try:
+        state = router_node(
+            {
+                "chat_id": "test",
+                "user_query": "What is AI?",
+                "source_scope": "Documents only",
+                "web_enabled": False,
+            }
+        )
+    finally:
+        _restore_llm(original)
+
+    assert state["route"] == "tutor_rag"
+    assert state["selected_agent"] == "RAG Tutor"
+    assert state["needs_documents"] is False
+    assert state["next_action"] is None
+
+
+def test_placeholder_topic_stays_clarify():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+        tool_calls=[{"tool_name": "none", "arguments": {}, "reasoning": "Unknown topic"}],
+    )
+    original = _with_fake_llm(planner)
+    try:
+        state = router_node(
+            {
+                "chat_id": "test",
+                "user_query": "explain KKKK",
+                "source_scope": "Documents only",
+                "web_enabled": False,
+            }
+        )
+    finally:
+        _restore_llm(original)
+
+    assert state["route"] == "clarify"
+    assert state["next_action"] == "final"
+
+
+def test_document_follow_up_clarification_reuses_previous_file_query():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+    )
+    original = _with_fake_llm(planner)
+    original_memory_loader = graph_nodes.load_recent_message_records
+    graph_nodes.load_recent_message_records = lambda chat_id, limit=10: [
+        {"role": "user", "content": "اشرح الملف", "metadata": {"route": "summary", "needs_documents": True}},
+        {
+            "role": "assistant",
+            "content": "تقرير مذاكرة عن الملف\nالمراجع المستخدمة\nملفات\nالصفحة 2",
+            "metadata": {"agent": "Summary", "route": "summary", "needs_documents": True},
+        },
+    ]
+    try:
+        state = router_node(
+            {
+                "chat_id": "test",
+                "user_query": "لم افهم",
+                "source_scope": "Documents only",
+                "web_enabled": False,
+            }
+        )
+    finally:
+        graph_nodes.load_recent_message_records = original_memory_loader
+        _restore_llm(original)
+
+    assert state["route"] == "tutor_rag"
+    assert state["needs_documents"] is True
+    assert state["retrieval_query"] == "اشرح الملف"
+    assert state["planned_tool_calls"][0]["tool_name"] == "document_search"
+    assert state["planned_tool_calls"][0]["arguments"]["query"] == "اشرح الملف"
+
+
+def test_document_follow_up_uses_ui_chat_history_after_failed_clarification():
+    planner = _planner_json(
+        "clarify",
+        [{"type": "clarify", "title": "Clarify"}],
+        selected_agent="Input Guard",
+    )
+    original = _with_fake_llm(planner)
+    try:
+        state = router_node(
+            {
+                "chat_id": "test",
+                "user_query": "لم افهم الاجابة السابقة",
+                "source_scope": "Documents only",
+                "web_enabled": False,
+                "recent_chat_messages": [
+                    {"role": "user", "content": "اشرح الملف", "metadata": {}},
+                    {
+                        "role": "assistant",
+                        "content": "تقرير مذاكرة عن الملف\nالمراجع المستخدمة\nالملف: embedded.pdf\nالصفحة 2",
+                        "agent": "Summary",
+                        "docs": [{"source_name": "embedded.pdf", "page": 2}],
+                        "metadata": {"route": "summary", "needs_documents": True, "docs_count": 5},
+                    },
+                    {"role": "user", "content": "لم افهم", "metadata": {}},
+                    {
+                        "role": "assistant",
+                        "content": "يرجى توضيح ما تحتاجه لأن السؤال غير محدد.",
+                        "agent": "RAG Tutor",
+                        "docs": [],
+                        "metadata": {"route": "tutor_rag", "needs_documents": False},
+                    },
+                ],
+            }
+        )
+    finally:
+        _restore_llm(original)
+
+    assert state["route"] == "tutor_rag"
+    assert state["needs_documents"] is True
+    assert state["retrieval_query"] == "اشرح الملف"
+    assert state["planned_tool_calls"][0]["tool_name"] == "document_search"
+
+
 def test_arabic_explain_my_file_repairs_bad_clarify_plan():
     planner = _planner_json(
         "clarify",
@@ -719,6 +880,11 @@ if __name__ == "__main__":
     test_planner_can_return_tasks_and_tools_together()
     test_documents_only_blocks_web_route_and_tool()
     test_clear_file_explanation_repairs_bad_clarify_plan()
+    test_follow_up_clarification_uses_recent_memory()
+    test_general_knowledge_question_repairs_bad_clarify_plan()
+    test_placeholder_topic_stays_clarify()
+    test_document_follow_up_clarification_reuses_previous_file_query()
+    test_document_follow_up_uses_ui_chat_history_after_failed_clarification()
     test_arabic_explain_my_file_repairs_bad_clarify_plan()
     test_arabic_explain_fayl_repairs_bad_clarify_plan()
     test_file_request_falls_back_when_planner_llm_fails()

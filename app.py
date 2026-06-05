@@ -1,3 +1,10 @@
+"""Streamlit entrypoint for the StudyWithMe application.
+
+The entrypoint keeps application composition thin: page configuration and
+global styles are applied first, session state is initialized, and then the
+home or chat workspace is rendered.
+"""
+
 import streamlit as st
 
 from src.chat.chat_state import get_store, init_session_state
@@ -7,6 +14,18 @@ from src.ui.styles import apply_styles
 
 
 def main() -> None:
+    """Render the active Streamlit page.
+
+    Side effects:
+        Initializes Streamlit session state, may switch pages, and renders UI
+        components that read/write chat JSON files through ``ChatStore``.
+
+    Example:
+        >>> # Run with: streamlit run app.py
+        >>> callable(main)
+        True
+    """
+
     configure_page()
     apply_styles()
     init_session_state()

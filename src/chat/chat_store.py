@@ -1,3 +1,10 @@
+"""Persistent JSON storage for chats, messages, traces, and evaluations.
+
+The UI and graph use this store as the durable session layer. Each chat is
+stored as one JSON file under ``data/chats`` and normalized on read to keep
+older chat records compatible with the current schema.
+"""
+
 from __future__ import annotations
 
 import json
@@ -11,6 +18,8 @@ from src.config import CHAT_DIR, DATA_DIR
 
 
 def _json_safe(value: Any) -> Any:
+    """Convert values to JSON-serializable primitives."""
+
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     if isinstance(value, dict):
@@ -26,15 +35,36 @@ def _json_safe(value: Any) -> Any:
 
 
 class ChatStore:
+    """JSON-backed chat repository.
+
+    Args:
+        chat_dir:
+            Directory containing ``chat_<id>.json`` files.
+
+    Side effects:
+        Creates the chat directory and migrates legacy conversations on
+        initialization.
+
+    Example:
+        >>> store = ChatStore()
+        >>> chat = store.ensure_chat()
+        >>> "chat_id" in chat
+        True
+    """
+
     def __init__(self, chat_dir: Path = CHAT_DIR):
         self.chat_dir = chat_dir
         self.chat_dir.mkdir(parents=True, exist_ok=True)
         self._migrate_legacy_conversations()
 
     def chat_path(self, chat_id: str) -> Path:
+        """Return the filesystem path for one chat JSON file."""
+
         return self.chat_dir / f"chat_{chat_id}.json"
 
     def list_chats(self) -> list[dict[str, Any]]:
+        """List chat summaries ordered by most recently updated."""
+
         chats = []
         for path in self.chat_dir.glob("chat_*.json"):
             try:
@@ -54,6 +84,12 @@ class ChatStore:
         return sorted(chats, key=lambda chat: chat.get("updated_at", ""), reverse=True)
 
     def load_chat(self, chat_id: str) -> dict[str, Any] | None:
+        """Load and normalize one chat.
+
+        Corrupt JSON files are copied to ``*.corrupt.json`` and ignored so the
+        app can continue running.
+        """
+
         path = self.chat_path(chat_id)
         if not path.exists():
             return None
@@ -69,6 +105,8 @@ class ChatStore:
         return self._normalize_chat(data)
 
     def save_chat(self, chat: dict[str, Any]) -> None:
+        """Normalize and atomically persist one chat."""
+
         chat = self._normalize_chat(chat)
         path = self.chat_path(chat["chat_id"])
         tmp_path = path.with_suffix(".tmp")
@@ -77,6 +115,8 @@ class ChatStore:
         tmp_path.replace(path)
 
     def create_chat(self, title: str = "New Conversation") -> dict[str, Any]:
+        """Create, persist, and return a new chat."""
+
         chat_id = new_id("chat").removeprefix("chat_")
         chat = asdict(
             Chat(
@@ -90,6 +130,8 @@ class ChatStore:
         return chat
 
     def ensure_chat(self, chat_id: str | None = None) -> dict[str, Any]:
+        """Return a requested chat, the latest chat, or a newly created chat."""
+
         if chat_id:
             chat = self.load_chat(chat_id)
             if chat:
@@ -103,11 +145,15 @@ class ChatStore:
         return self.create_chat()
 
     def delete_chat(self, chat_id: str) -> None:
+        """Delete one chat JSON file if it exists."""
+
         path = self.chat_path(chat_id)
         if path.exists():
             path.unlink()
 
     def rename_chat(self, chat_id: str, title: str) -> None:
+        """Rename a chat when the new title is non-empty."""
+
         chat = self.load_chat(chat_id)
         if not chat:
             return
@@ -129,6 +175,13 @@ class ChatStore:
         evaluation_id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        """Append a user or assistant message to a chat.
+
+        Side effects:
+            Persists the chat, updates ``updated_at``, increments prompt count
+            for user messages, and auto-titles new conversations.
+        """
+
         chat = self.ensure_chat(chat_id)
         message = asdict(
             ChatMessage(
@@ -155,6 +208,8 @@ class ChatStore:
         return message
 
     def update_chat(self, chat_id: str, **fields: Any) -> dict[str, Any]:
+        """Update arbitrary chat fields and persist the result."""
+
         chat = self.ensure_chat(chat_id)
         chat.update(fields)
         chat["updated_at"] = now_iso()
@@ -162,12 +217,16 @@ class ChatStore:
         return chat
 
     def append_trace(self, chat_id: str, trace: dict[str, Any]) -> None:
+        """Append an observability trace to a chat."""
+
         chat = self.ensure_chat(chat_id)
         chat.setdefault("traces", []).append(trace)
         chat["updated_at"] = now_iso()
         self.save_chat(chat)
 
     def append_evaluation(self, chat_id: str, evaluation: dict[str, Any]) -> None:
+        """Append an evaluation record to a chat."""
+
         chat = self.ensure_chat(chat_id)
         chat.setdefault("evaluations", []).append(evaluation)
         chat["updated_at"] = now_iso()
@@ -184,6 +243,13 @@ class ChatStore:
         response_time_ms: int = 0,
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        """Persist an assistant answer plus optional trace/evaluation records.
+
+        Side effects:
+            Saves the assistant message, response-time stats, trace, and
+            evaluation in one normalized chat write.
+        """
+
         chat = self.ensure_chat(chat_id)
         if evaluation and evaluation.get("evaluation_id"):
             chat.setdefault("evaluations", []).append(evaluation)
@@ -214,6 +280,8 @@ class ChatStore:
         return message
 
     def _normalize_chat(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Return a chat dictionary with all expected schema keys present."""
+
         now = now_iso()
         chat_id = str(data.get("chat_id") or data.get("id") or new_id("chat").removeprefix("chat_"))
         return {
@@ -233,6 +301,11 @@ class ChatStore:
         }
 
     def _migrate_legacy_conversations(self) -> None:
+        """Import legacy ``data/conversations.json`` once when no chat files exist."""
+
+        # Keep this compatibility path: older project snapshots stored every
+        # conversation in one JSON object. Newer UI code expects one file per
+        # chat, so migration runs only for empty chat directories.
         legacy_path = DATA_DIR / "conversations.json"
         if not legacy_path.exists() or any(self.chat_dir.glob("chat_*.json")):
             return

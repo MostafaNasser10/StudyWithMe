@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import base64
+import os
 from pathlib import Path
 
 import streamlit as st
 
 from src.chat.chat_store import ChatStore
 from src.files.file_manager import delete_chat_assets
+from src.memory.preference_memory import add_preference, delete_preference, load_preferences
 
 
 LOGO_PATH = Path("assets") / "logo.png"
+CHAT_LIST_RENDER_LIMIT = int(os.getenv("CHAT_LIST_RENDER_LIMIT", "28"))
 
 
 @st.cache_data(show_spinner=False)
@@ -40,6 +43,36 @@ def _clear_all_chats(store: ChatStore) -> None:
         store.delete_chat(chat["chat_id"])
     st.session_state.active_chat_id = store.create_chat()["chat_id"]
     st.session_state.editing_chat_id = None
+
+
+def _render_long_term_memory_panel() -> None:
+    preferences = load_preferences()
+    with st.container(border=True):
+        st.markdown(
+            "<span class='config-surface-marker'></span><div class='config-kicker'>Global Configuration</div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("**Long-Term Memory**")
+        st.caption(f"{len(preferences)} saved preference(s)")
+        preference_text = st.text_input(
+            "Add preference",
+            key="long_term_memory_preference_text",
+            placeholder="Example: Add an Automotive example in every explanation",
+        )
+        if st.button("Add", key="add_long_term_preference", width="stretch"):
+            add_preference(preference_text)
+            st.rerun()
+
+        if not preferences:
+            st.caption("No saved preferences.")
+        for idx, preference in enumerate(preferences):
+            col_a, col_b = st.columns([0.76, 0.24])
+            with col_a:
+                st.caption(preference)
+            with col_b:
+                if st.button("Delete", key=f"delete_long_term_preference_{idx}"):
+                    delete_preference(idx)
+                    st.rerun()
 
 
 def render_left_sidebar(store: ChatStore) -> None:
@@ -74,16 +107,22 @@ def render_left_sidebar(store: ChatStore) -> None:
             st.session_state.editing_chat_id = None
             st.rerun()
 
-        st.divider()
-        st.caption("Chat history")
+        st.markdown("<div class='sidebar-section-label'>Recent chats</div>", unsafe_allow_html=True)
 
         st.session_state.setdefault("editing_chat_id", None)
         chats = store.list_chats()
-        for chat in chats:
+        visible_chats = chats[:CHAT_LIST_RENDER_LIMIT]
+        if len(chats) > CHAT_LIST_RENDER_LIMIT:
+            st.caption(f"Showing latest {CHAT_LIST_RENDER_LIMIT} chats.")
+        for chat in visible_chats:
             chat_id = chat["chat_id"]
             active = chat_id == st.session_state.active_chat_id
             title = chat.get("title") or "New Conversation"
 
+            st.markdown(
+                f"<div class='chat-card-row {'active' if active else ''}'>",
+                unsafe_allow_html=True,
+            )
             open_col, edit_col, delete_col = st.columns([0.74, 0.13, 0.13], gap="small")
             with open_col:
                 if st.button(
@@ -121,8 +160,12 @@ def render_left_sidebar(store: ChatStore) -> None:
                     if st.button("Cancel", key=f"cancel_rename_{chat_id}", width="stretch"):
                         st.session_state.editing_chat_id = None
                         st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        st.divider()
+        st.markdown("<div class='sidebar-section-label'>Global memory</div>", unsafe_allow_html=True)
+        _render_long_term_memory_panel()
+
+        st.markdown("<div class='sidebar-section-label'>Maintenance</div>", unsafe_allow_html=True)
         if st.button("Clear all chat history", width="stretch"):
             _clear_all_chats(store)
             st.rerun()

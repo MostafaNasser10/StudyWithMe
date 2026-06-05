@@ -9,11 +9,13 @@ import streamlit as st
 
 from src.chat.chat_store import ChatStore
 from src.config import DEFAULT_BM25_SEARCH_ENABLED, ENABLE_DEEPEVAL_EVAL, ENABLE_RAGAS_EVAL, MODEL_PROFILES, OPENAI_API_KEY, SOURCE_SCOPES
+from src.memory.chat_memory import save_chat_message
 from src.tools.quiz_grading_tool import QuizGradingTool
 from src.ui.components import safe_text
 
 
 CHAT_MESSAGE_RENDER_LIMIT = int(os.getenv("CHAT_MESSAGE_RENDER_LIMIT", "30"))
+CHAT_MESSAGE_AREA_HEIGHT = int(os.getenv("CHAT_MESSAGE_AREA_HEIGHT", "420"))
 
 STAGE_LABELS = {
     "router": "Planning requested tasks",
@@ -39,6 +41,39 @@ STAGE_LABELS = {
 }
 
 
+def _recent_chat_messages_for_graph(chat: dict, limit: int = 12) -> list[dict[str, Any]]:
+    """Return recent UI chat messages in a graph-friendly memory format.
+
+    Args:
+        chat:
+            Current chat dictionary loaded by ``ChatStore``.
+
+        limit:
+            Maximum number of recent user/assistant messages to include.
+
+    Returns:
+        Recent message records ordered from oldest to newest.
+    """
+
+    messages = [
+        message
+        for message in (chat.get("messages") or [])
+        if message.get("role") in {"user", "assistant"} and str(message.get("content") or "").strip()
+    ]
+    recent = messages[-max(limit, 0) :]
+    return [
+        {
+            "role": str(message.get("role") or ""),
+            "content": str(message.get("content") or ""),
+            "metadata": message.get("metadata") if isinstance(message.get("metadata"), dict) else {},
+            "agent": message.get("agent"),
+            "docs": message.get("docs") if isinstance(message.get("docs"), list) else [],
+            "created_at": message.get("created_at"),
+        }
+        for message in recent
+    ]
+
+
 def _initial_graph_state(
     chat: dict,
     query: str,
@@ -56,6 +91,7 @@ def _initial_graph_state(
         "critic_enabled": bool(st.session_state.critic_enabled),
         "quiz": quiz,
         "user_answers": user_answers,
+        "recent_chat_messages": _recent_chat_messages_for_graph(chat),
     }
 
 
@@ -213,6 +249,14 @@ def _scroll_chat_to_bottom() -> None:
     )
 
 
+def _maybe_scroll_chat_to_bottom(chat: dict[str, Any], *, force: bool = False) -> None:
+    key = f"last_scrolled_message_count_{chat.get('chat_id', 'default')}"
+    message_count = len(chat.get("messages") or [])
+    if force or st.session_state.get(key) != message_count:
+        st.session_state[key] = message_count
+        _scroll_chat_to_bottom()
+
+
 def _answer_stream(answer: str):
     text = answer or ""
     for idx in range(0, len(text), 90):
@@ -265,6 +309,13 @@ def _persist_graph_result(
     evaluation = state.get("evaluation")
     trace = state.get("trace") or {}
     final_answer = state.get("final_answer") or ""
+    message_metadata = {
+        "route": state.get("route"),
+        "needs_documents": bool(state.get("needs_documents")),
+        "retrieval_query": state.get("retrieval_query"),
+        "docs_count": len(state.get("docs") or []),
+        **(metadata or {}),
+    }
 
     store.record_assistant_result(
         chat["chat_id"],
@@ -274,7 +325,7 @@ def _persist_graph_result(
         trace=trace,
         evaluation=evaluation,
         response_time_ms=response_time_ms,
-        metadata=metadata,
+        metadata=message_metadata,
     )
 
     st.session_state.last_trace = trace
@@ -287,6 +338,34 @@ def _persist_graph_result(
         "tool_results": state.get("tool_results") or [],
         "prompt": "[hidden]",
     }
+
+
+def _save_turn_to_memory(chat_id: str, query: str, answer: str, state: dict[str, Any]) -> None:
+    try:
+        save_chat_message(
+            session_id=chat_id,
+            role="user",
+            content=query,
+            metadata={
+                "route": state.get("route"),
+                "needs_documents": bool(state.get("needs_documents")),
+                "retrieval_query": state.get("retrieval_query"),
+            },
+        )
+        save_chat_message(
+            session_id=chat_id,
+            role="assistant",
+            content=answer,
+            metadata={
+                "agent": state.get("selected_agent"),
+                "route": state.get("route"),
+                "needs_documents": bool(state.get("needs_documents")),
+                "retrieval_query": state.get("retrieval_query"),
+                "docs_count": len(state.get("docs") or []),
+            },
+        )
+    except Exception as exc:
+        st.session_state.last_memory_error = str(exc)
 
 
 def _attach_deferred_evaluation(chat_id: str, store: ChatStore, state: dict[str, Any]) -> None:
@@ -462,18 +541,18 @@ def _answer_label(answer: str) -> str:
 
 def _format_quiz_result(result: dict[str, Any]) -> str:
     lines = [
-        "# نتيجة الاختبار",
-        f"درجتك: {result.get('correct')} من {result.get('total')} ({result.get('percentage')}%).",
+        "# Quiz Result",
+        f"Score: {result.get('correct')} out of {result.get('total')} ({result.get('percentage')}%).",
         "",
-        "# تصحيح سريع",
+        "# Quick Review",
     ]
     for idx, item in enumerate(result.get("details") or [], start=1):
-        mark = "صحيح" if item.get("correct") else "خطأ"
+        mark = "Correct" if item.get("correct") else "Wrong"
         lines.append(
-            f"- السؤال {idx}: {mark}. إجابتك: {item.get('user_answer') or 'بدون إجابة'}، "
-            f"الإجابة الصحيحة: {item.get('correct_answer')}."
+            f"- Question {idx}: {mark}. Your answer: {item.get('user_answer') or 'No answer'}, "
+            f"correct answer: {item.get('correct_answer')}."
         )
-    lines.extend(["", "اضغط مراجعة الإجابات إذا أردت شرحا تعليميا مفصلا للأخطاء والمفاهيم الضعيفة."])
+    lines.extend(["", "Click Review Answers if you want detailed feedback on mistakes and weak concepts."])
     return "\n".join(lines)
 
 
@@ -485,14 +564,14 @@ def _render_pending_quiz_feedback(chat: dict, store: ChatStore) -> None:
     if latest.get("feedback") or not latest.get("quiz_result"):
         return
 
-    if not st.button("مراجعة الإجابات", type="secondary", width="stretch"):
+    if not st.button("Review Answers", type="secondary", width="stretch"):
         return
 
     started = perf_counter()
     runtime_placeholder = st.empty()
     state = _invoke_graph(
         chat,
-        "راجع نتيجة الاختبار واشرح أخطائي",
+        "Review my quiz result and explain my mistakes",
         quiz=latest.get("quiz"),
         user_answers=latest.get("user_answers"),
         progress_placeholder=runtime_placeholder,
@@ -519,7 +598,7 @@ def _render_active_quiz(chat: dict, store: ChatStore) -> None:
         return
 
     st.markdown("<div class='rtl'>", unsafe_allow_html=True)
-    st.subheader(quiz.get("title") or "اختبار")
+    st.subheader(quiz.get("title") or "Quiz")
     with st.form(f"quiz_form_{quiz.get('quiz_id', chat['chat_id'])}"):
         answers: dict[str, str] = {}
         for idx, question in enumerate(quiz.get("questions") or [], start=1):
@@ -532,7 +611,7 @@ def _render_active_quiz(chat: dict, store: ChatStore) -> None:
                 if choices.get(letter) is not None
             ]
             selected = st.radio(
-                "اختر الإجابة",
+                "Choose the answer",
                 options=labels,
                 index=0,
                 key=f"quiz_{quiz.get('quiz_id')}_{qid}",
@@ -540,7 +619,7 @@ def _render_active_quiz(chat: dict, store: ChatStore) -> None:
             )
             answers[qid] = _answer_label(selected.split(".", 1)[0].strip())
 
-        submitted = st.form_submit_button("إرسال", type="primary", width="stretch")
+        submitted = st.form_submit_button("Submit", type="primary", width="stretch")
 
     st.markdown("</div>", unsafe_allow_html=True)
     if not submitted:
@@ -553,7 +632,7 @@ def _render_active_quiz(chat: dict, store: ChatStore) -> None:
     store.add_message(
         chat["chat_id"],
         role="user",
-        content="تم إرسال إجابات الاختبار.",
+        content="Quiz answers submitted.",
         metadata={"quiz_submission": {"quiz_id": quiz.get("quiz_id"), "answers": answers}},
     )
     history = chat.get("quiz_history") or []
@@ -607,72 +686,73 @@ def _render_workspace_controls() -> None:
     st.markdown("<div class='settings-summary'>", unsafe_allow_html=True)
     st.markdown(
         f"""
-        <span class="settings-pill">Sources: {safe_text(current_scope)}</span>
-        <span class="settings-pill">BM25: {'On' if st.session_state.bm25_search_enabled else 'Off'}</span>
-        <span class="settings-pill">Reflection: {'On' if st.session_state.reflection_enabled else 'Off'}</span>
-        <span class="settings-pill">Critic: {'On' if st.session_state.critic_enabled else 'Off'}</span>
+        <span class="settings-pill" title="Controls whether answers use uploaded files, web results, or both.">Sources: {safe_text(current_scope)}</span>
+        <span class="settings-pill" title="Runs exact-term lexical search beside vector retrieval.">BM25: {'On' if st.session_state.bm25_search_enabled else 'Off'}</span>
+        <span class="settings-pill" title="Runs a lightweight self-review before final evaluation.">Reflection: {'On' if st.session_state.reflection_enabled else 'Off'}</span>
+        <span class="settings-pill" title="Checks answer risk, grounding, and unsupported claims.">Critic: {'On' if st.session_state.critic_enabled else 'Off'}</span>
         """,
         unsafe_allow_html=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-    st.session_state.setdefault("settings_panel", "Retrieval")
-    panels = ("Retrieval", "Agents", "Model")
-    tab_cols = st.columns(3, gap="medium")
-    for label, col in zip(panels, tab_cols):
-        with col:
-            selected = st.session_state.settings_panel == label
-            if st.button(
-                label,
-                key=f"settings_panel_{label.lower()}",
-                type="primary" if selected else "secondary",
-                width="stretch",
-            ):
-                st.session_state.settings_panel = label
-                st.rerun()
-
-    if st.session_state.settings_panel == "Retrieval":
-        source_col, bm25_col = st.columns([0.62, 0.38])
-        with source_col:
+    menu_cols = st.columns(3, gap="medium")
+    with menu_cols[0]:
+        with st.popover(
+            "Retrieval",
+            help="Configure source mode and lexical search.",
+            use_container_width=True,
+            key="retrieval_config_popover",
+        ):
+            st.caption("Choose how the answer should use sources.")
             st.session_state.source_scope = st.selectbox(
                 "Source mode",
                 SOURCE_SCOPES,
                 index=SOURCE_SCOPES.index(current_scope),
                 help="Choose whether answers use uploaded files, web results, or both.",
             )
-        with bm25_col:
             st.session_state.bm25_search_enabled = st.toggle(
                 "Lexical BM25",
                 value=bool(st.session_state.bm25_search_enabled),
                 help="Run keyword search in parallel with vector search. Faster off; sometimes better for exact terms on.",
             )
 
-    elif st.session_state.settings_panel == "Agents":
-        reflection_col, critic_col = st.columns(2)
-        with reflection_col:
+    with menu_cols[1]:
+        with st.popover(
+            "Quality Agents",
+            help="Configure review agents used after answer generation.",
+            use_container_width=True,
+            key="agents_config_popover",
+        ):
+            st.caption("Enable or disable lightweight quality checks.")
             st.session_state.reflection_enabled = st.toggle(
                 "Reflection agent",
                 value=bool(st.session_state.reflection_enabled),
                 help="Fast deterministic self-review is used by default.",
             )
-        with critic_col:
             st.session_state.critic_enabled = st.toggle(
                 "Critic agent",
                 value=bool(st.session_state.critic_enabled),
                 help="Checks risk and grounding before citation/evaluation.",
             )
 
-    else:
-        st.session_state.model_profile = st.selectbox(
-            "Answer model",
-            model_keys,
-            index=model_keys.index(current_model),
-            format_func=lambda key: MODEL_PROFILES[key]["label"],
-            help="Controls the model used by the graph workflow.",
-        )
-        selected_settings = MODEL_PROFILES.get(st.session_state.model_profile, {})
-        if selected_settings.get("provider") == "openai" and not OPENAI_API_KEY:
-            st.caption("OPENAI_API_KEY is missing. Add it to your environment to use OpenAI gpt-4o-mini.")
+    with menu_cols[2]:
+        with st.popover(
+            "Model",
+            help="Choose the model profile used for answers.",
+            use_container_width=True,
+            key="model_config_popover",
+        ):
+            st.caption("Choose the answer model profile.")
+            st.session_state.model_profile = st.selectbox(
+                "Answer model",
+                model_keys,
+                index=model_keys.index(current_model),
+                format_func=lambda key: MODEL_PROFILES[key]["label"],
+                help="Controls the model used by the graph workflow.",
+            )
+            selected_settings = MODEL_PROFILES.get(st.session_state.model_profile, {})
+            if selected_settings.get("provider") == "openai" and not OPENAI_API_KEY:
+                st.caption("OPENAI_API_KEY is missing. Add it to your environment to use OpenAI gpt-4o-mini.")
 
     st.session_state.web_search_enabled = st.session_state.source_scope in {"Web only", "Documents + Web"}
     st.markdown("</div>", unsafe_allow_html=True)
@@ -680,6 +760,7 @@ def _render_workspace_controls() -> None:
 
 def render_chat_view(chat: dict, store: ChatStore) -> None:
     chat_title = safe_text(chat.get("title", "Study session"))
+    st.markdown("<div class='chat-workspace-root'></div>", unsafe_allow_html=True)
     st.markdown(
         f"""
         <div class="topbar">
@@ -701,8 +782,9 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
 
     _render_workspace_controls()
 
-    message_area = st.container(height=620, border=False)
+    message_area = st.container(height=CHAT_MESSAGE_AREA_HEIGHT, border=False)
     with message_area:
+        st.markdown("<span class='chat-message-area-marker'></span>", unsafe_allow_html=True)
         messages = chat.get("messages", [])
         hidden_count = max(len(messages) - CHAT_MESSAGE_RENDER_LIMIT, 0)
         if hidden_count:
@@ -721,7 +803,7 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
 
         _render_active_quiz(chat, store)
         _render_pending_quiz_feedback(chat, store)
-        _scroll_chat_to_bottom()
+        _maybe_scroll_chat_to_bottom(chat)
 
     query = st.chat_input("Ask about your files...")
     if not query:
@@ -731,10 +813,10 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
     with message_area:
         with st.chat_message("user"):
             st.markdown(query)
-        _scroll_chat_to_bottom()
+        runtime_placeholder = st.empty()
+        _maybe_scroll_chat_to_bottom(chat, force=True)
 
     started = perf_counter()
-    runtime_placeholder = st.empty()
     state = _invoke_graph(chat, query, progress_placeholder=runtime_placeholder)
     response_time_ms = round((perf_counter() - started) * 1000)
     runtime_placeholder.empty()
@@ -742,13 +824,14 @@ def render_chat_view(chat: dict, store: ChatStore) -> None:
     with message_area:
         with st.chat_message("assistant"):
             _stream_answer_preview(state.get("final_answer") or "")
-        _scroll_chat_to_bottom()
+        _maybe_scroll_chat_to_bottom(chat, force=True)
 
     metadata = _sync_active_quiz_after_graph(chat["chat_id"], store, state)
 
     _persist_graph_result(chat, store, state, response_time_ms, metadata=metadata or None)
+    _save_turn_to_memory(chat["chat_id"], query, state.get("final_answer") or "", state)
     if state.get("quiz"):
         with message_area:
             fresh_chat = store.ensure_chat(chat["chat_id"])
             _render_active_quiz(fresh_chat, store)
-            _scroll_chat_to_bottom()
+            _maybe_scroll_chat_to_bottom(fresh_chat, force=True)

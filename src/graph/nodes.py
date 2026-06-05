@@ -40,6 +40,8 @@ from src.evaluation.response_evaluator import evaluate_response
 from src.graph.schemas import PlannerDecision, Quiz, ToolCallPlan, ToolCallRequest, ToolCallResponse, model_to_dict
 from src.graph.state import StudyGraphState
 from src.llm import get_llm, model_is_configured, resolve_model_profile
+from src.memory.chat_memory import load_recent_message_records, load_recent_messages
+from src.memory.memory_context_builder import build_memory_augmented_messages, render_messages_as_prompt
 from src.prompts import FEEDBACK_FROM_QUIZ_PROMPT, FUNCTION_CALLING_PROMPT, QUIZ_JSON_PROMPT, ROUTER_PROMPT, STUDY_PLAN_FROM_WEAKNESS_PROMPT
 from src.tools.citation_checker_tool import CitationCheckerTool
 from src.tools.quiz_grading_tool import QuizGradingTool
@@ -599,6 +601,263 @@ def _has_explain_intent(text: str) -> bool:
     return latin_explain or arabic_explain
 
 
+def _is_follow_up_clarification(query: str) -> bool:
+    """
+    Detect short follow-up clarification requests that need recent chat context.
+
+    Args:
+        query: Current user message.
+
+    Returns:
+        True when the message is likely asking to clarify the previous answer.
+    """
+    text = " ".join((query or "").strip().lower().split())
+    if not text:
+        return False
+    follow_up_phrases = [
+        "i did not understand",
+        "i don't understand",
+        "i dont understand",
+        "didn't understand",
+        "didnt understand",
+        "not clear",
+        "explain more",
+        "clarify more",
+        "can you explain more",
+        "لم افهم",
+        "لم أفهم",
+        "مش فاهم",
+        "مش فاهمة",
+        "ما فهمت",
+        "مفهمتش",
+        "ممكن توضح",
+        "وضحلي",
+        "وضح لى",
+        "وضح لي",
+        "اشرح اكتر",
+        "اشرح أكثر",
+        "فهمني",
+        "مش واضح",
+    ]
+    return any(phrase in text for phrase in follow_up_phrases)
+
+
+def _has_recent_conversation_memory(chat_id: str | None) -> bool:
+    """
+    Check whether a chat has an assistant answer available for short-term memory.
+
+    Args:
+        chat_id: Persistent chat/session identifier.
+
+    Returns:
+        True when recent memory contains at least one assistant message.
+    """
+    if not chat_id:
+        return False
+    try:
+        recent_messages = load_recent_messages(chat_id, limit=6)
+    except Exception:
+        return False
+    return any(
+        item.get("role") == "assistant" and str(item.get("content") or "").strip()
+        for item in recent_messages
+    )
+
+
+def _assistant_answer_is_generic_clarification(content: str) -> bool:
+    """
+    Detect generic clarification answers that should not become follow-up topics.
+
+    Args:
+        content: Assistant answer text.
+
+    Returns:
+        True when the answer is a generic "please clarify" response.
+    """
+    text = " ".join((content or "").split())
+    generic_markers = [
+        "أحتاج طلبا أوضح",
+        "يبدو أنك لم تقدم",
+        "يرجى توضيح",
+        "السؤال غير محدد",
+        "لا توجد مصادر متاحة لأن السؤال غير محدد",
+        "تحديد السؤال أو الموضوع",
+        "please clarify",
+        "not specific",
+    ]
+    return any(marker.lower() in text.lower() for marker in generic_markers)
+
+
+def _message_indicates_document_context(
+    assistant: dict[str, Any],
+    previous_user_query: str,
+    previous_user_metadata: dict[str, Any],
+) -> bool:
+    """
+    Decide whether a previous assistant turn was grounded in uploaded documents.
+
+    Args:
+        assistant: Assistant message record.
+
+        previous_user_query: User request that triggered the assistant message.
+
+        previous_user_metadata: Metadata saved with the previous user message.
+
+    Returns:
+        True when the turn appears to have used uploaded files.
+    """
+    assistant_metadata = assistant.get("metadata") if isinstance(assistant.get("metadata"), dict) else {}
+    assistant_route = str(assistant_metadata.get("route") or previous_user_metadata.get("route") or "")
+    assistant_agent = str(assistant_metadata.get("agent") or assistant.get("agent") or "")
+    assistant_text = str(assistant.get("content") or "")
+    docs = assistant.get("docs") if isinstance(assistant.get("docs"), list) else []
+    document_markers = ("المراجع المستخدمة", "الصفحة", "ملفات", "الملف", "document_search")
+    return bool(
+        assistant_route in {"summary", "quiz_generate", "study_plan", "feedback"}
+        or assistant_metadata.get("needs_documents")
+        or previous_user_metadata.get("needs_documents")
+        or assistant_metadata.get("docs_count")
+        or docs
+        or assistant_agent == "Summary"
+        or _has_explicit_document_intent(previous_user_query.lower())
+        or any(marker in assistant_text for marker in document_markers)
+    )
+
+
+def _recent_conversation_profile(
+    chat_id: str | None,
+    recent_records: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """
+    Summarize recent memory for follow-up routing.
+
+    Args:
+        chat_id: Persistent chat/session identifier.
+
+        recent_records: Optional recent chat records from the UI chat store.
+
+    Returns:
+        Dictionary describing the last assistant answer, the previous user
+        request, and whether that previous turn appears document-grounded.
+    """
+    profile: dict[str, Any] = {
+        "has_assistant": False,
+        "previous_user_query": "",
+        "assistant_route": "",
+        "document_related": False,
+    }
+    records = list(recent_records or [])
+    if not records and chat_id:
+        try:
+            records = load_recent_message_records(chat_id, limit=12)
+        except Exception:
+            records = []
+    if not records:
+        return profile
+
+    fallback_profile: dict[str, Any] | None = None
+    for assistant_index in range(len(records) - 1, -1, -1):
+        assistant = records[assistant_index]
+        if assistant.get("role") != "assistant":
+            continue
+        previous_user = next(
+            (
+                records[idx]
+                for idx in range(assistant_index - 1, -1, -1)
+                if records[idx].get("role") == "user"
+            ),
+            {},
+        )
+        previous_user_query = str(previous_user.get("content") or "").strip()
+        previous_user_metadata = previous_user.get("metadata") if isinstance(previous_user.get("metadata"), dict) else {}
+        assistant_metadata = assistant.get("metadata") if isinstance(assistant.get("metadata"), dict) else {}
+        assistant_route = str(assistant_metadata.get("route") or previous_user_metadata.get("route") or "")
+        candidate = {
+            "has_assistant": True,
+            "previous_user_query": previous_user_query,
+            "assistant_route": assistant_route,
+            "document_related": _message_indicates_document_context(
+                assistant,
+                previous_user_query,
+                previous_user_metadata,
+            ),
+        }
+        if fallback_profile is None:
+            fallback_profile = candidate
+        if candidate["document_related"]:
+            profile.update(candidate)
+            return profile
+        if not _assistant_answer_is_generic_clarification(str(assistant.get("content") or "")):
+            profile.update(candidate)
+            return profile
+
+    if fallback_profile:
+        profile.update(fallback_profile)
+    return profile
+
+
+def _looks_like_unknown_placeholder_topic(query: str) -> bool:
+    """
+    Detect invented placeholder topics that should ask for clarification.
+
+    Args:
+        query: Current user message.
+
+    Returns:
+        True for prompts like ``explain KKKK`` where the requested topic looks
+        like a placeholder rather than a known concept.
+    """
+    text = (query or "").strip()
+    if not _has_explain_intent(text.lower()):
+        return False
+    allowed_terms = {"ai", "llm", "rag", "qa", "mcq", "pdf", "faiss", "ocr", "bm25"}
+    action_terms = {"explain", "clarify", "describe", "teach"}
+    latin_tokens = re.findall(r"[A-Za-z]{3,12}", text)
+    candidate_tokens = [
+        token
+        for token in latin_tokens
+        if token.lower() not in allowed_terms and token.lower() not in action_terms
+    ]
+    if not candidate_tokens:
+        return False
+    for token in candidate_tokens:
+        lowered = token.lower()
+        if re.fullmatch(r"([a-z])\1{2,}", lowered):
+            return True
+        if len(lowered) <= 6 and not re.search(r"[aeiou]", lowered):
+            return True
+    return False
+
+
+def _can_answer_from_model_knowledge(query: str) -> bool:
+    """
+    Decide whether a clarify route should become a normal model answer.
+
+    Args:
+        query: Current user message.
+
+    Returns:
+        True when the query has enough semantic content for a general tutor
+        answer without requiring documents or web retrieval.
+    """
+    return not _is_low_information_query(query) and not _looks_like_unknown_placeholder_topic(query)
+
+
+def _remove_document_tool_calls(decision: PlannerDecision) -> None:
+    """
+    Remove document-search tool calls from a planner decision in place.
+
+    Args:
+        decision: Planner decision returned by the LLM and normalized by Python.
+
+    Side effects:
+        Mutates ``decision.tool_calls``.
+    """
+    decision.tool_calls = [
+        call for call in decision.tool_calls if call.tool_name != "document_search"
+    ]
+
+
 def _requested_question_count(query: str, default: int = 5) -> int:
     text = (query or "").lower()
     digit_match = re.search(r"\b(\d{1,2})\b", text)
@@ -820,6 +1079,23 @@ def _planner_decision_from_payload(
     elif len(decision.tasks) == 1 and decision.route == "multi_task":
         only = str((decision.tasks[0] or {}).get("type") or "explain")
         decision.route = "tutor_rag" if only == "explain" else TASK_ROUTES.get(only, "tutor_rag")
+    general_knowledge_query = (
+        source_scope != "Web only"
+        and decision.route in {"clarify", "tutor_rag"}
+        and not document_summary_requested
+        and not quiz_requested
+        and not _has_explicit_document_intent(text)
+        and not _requires_live_source(text)
+        and _can_answer_from_model_knowledge(query)
+    )
+    if general_knowledge_query:
+        decision.route = "tutor_rag"
+        decision.selected_agent = "RAG Tutor"
+        decision.tasks = [_task("explain", _task_section_title("explain"))]
+        decision.needs_documents = False
+        decision.needs_web = False
+        decision.answer_style = "direct"
+        _remove_document_tool_calls(decision)
     decision.tool_calls = _filter_planned_tool_calls(decision.tool_calls, source_scope, web_enabled)
     if decision.route == "multi_task":
         decision.selected_agent = "Planner"
@@ -877,6 +1153,34 @@ HAS SUBMITTED QUIZ ANSWERS:
             source_scope,
             web_enabled,
         )
+
+    recent_profile = _recent_conversation_profile(
+        state.get("chat_id"),
+        state.get("recent_chat_messages") if isinstance(state.get("recent_chat_messages"), list) else None,
+    )
+    if decision.route in {"clarify", "tutor_rag"} and _is_follow_up_clarification(state.get("user_query", "")) and recent_profile["has_assistant"]:
+        retrieval_query = recent_profile.get("previous_user_query") or state.get("user_query", "")
+        needs_documents_for_follow_up = bool(recent_profile.get("document_related") and source_scope != "Web only")
+        decision.route = "tutor_rag"
+        decision.selected_agent = "RAG Tutor"
+        decision.tasks = [_task("explain", _task_section_title("explain"))]
+        decision.needs_documents = needs_documents_for_follow_up
+        decision.needs_web = False
+        decision.answer_style = "direct"
+        decision.tool_calls = [
+            ToolCallRequest(
+                tool_name="document_search",
+                arguments={"query": retrieval_query, "top_k": TOP_K},
+                reasoning="The user is clarifying a previous document-grounded answer.",
+            )
+        ] if needs_documents_for_follow_up else []
+        state["retrieval_query"] = retrieval_query
+        state.setdefault("trace", {})["follow_up"] = {
+            "detected": True,
+            "previous_user_query": retrieval_query,
+            "previous_route": recent_profile.get("assistant_route"),
+            "needs_documents": needs_documents_for_follow_up,
+        }
 
     route = decision.route
     tasks = decision.tasks
@@ -1348,6 +1652,20 @@ def final_composer_node(state: StudyGraphState) -> StudyGraphState:
     return state
 
 
+def _retrieval_query(state: StudyGraphState) -> str:
+    """
+    Return the query that should be used for document/web retrieval.
+
+    Args:
+        state: Current graph state.
+
+    Returns:
+        The explicit retrieval query for follow-ups, otherwise the current user
+        query.
+    """
+    return str(state.get("retrieval_query") or state.get("user_query") or "")
+
+
 def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
     started = perf_counter()
     retrieval_breakdown: dict[str, Any] = {
@@ -1356,12 +1674,14 @@ def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
         "web_search": {"enabled": False, "status": "skipped"},
     }
     try:
+        retrieval_query = _retrieval_query(state)
+
         def search_docs():
             from src.tools.document_search_tool import DocumentSearchTool
 
-            top_k = max(TOP_K, 10) if _is_document_summary_request(state.get("user_query", "")) else TOP_K
+            top_k = max(TOP_K, 10) if _is_document_summary_request(retrieval_query) else TOP_K
             return DocumentSearchTool().search(
-                state.get("user_query", ""),
+                retrieval_query,
                 chat_id=state.get("chat_id"),
                 top_k=top_k,
                 bm25_enabled=bool(state.get("bm25_enabled")),
@@ -1412,7 +1732,7 @@ def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
                 "results": len(state.get("web_sources") or []),
                 "provider": web_result.get("provider"),
             }
-        if _is_document_summary_request(state.get("user_query", "")):
+        if _is_document_summary_request(retrieval_query):
             sample_context, sample_docs = _sample_uploaded_documents(
                 state.get("chat_id"),
                 max_docs=GRAPH_DOCUMENT_OVERVIEW_PAGES,
@@ -1447,8 +1767,8 @@ def retrieve_docs_node(state: StudyGraphState) -> StudyGraphState:
         state.get("source_scope") == "Documents only"
         and state.get("route") != "quiz_generate"
         and state.get("answer_style") == "direct"
-        and not _has_explicit_document_intent((state.get("user_query") or "").lower())
-        and not _docs_look_relevant(state.get("user_query", ""), state.get("docs") or [])
+        and not _has_explicit_document_intent(_retrieval_query(state).lower())
+        and not _docs_look_relevant(_retrieval_query(state), state.get("docs") or [])
     ):
         state["final_answer"] = _direct_answer(
             "لم أجد دليلا واضحا في المستندات الحالية يربط سؤالك بمحتوى الملفات، والبحث في الويب غير مستخدم في وضع Documents only. غيّر Source mode إلى Web only أو Documents + Web إذا كان السؤال عاما أو حديثا.",
@@ -1507,7 +1827,7 @@ def _sample_uploaded_documents(chat_id: str | None, max_docs: int = 4, max_chars
 
 
 def _document_grounded_web_query(state: StudyGraphState) -> str:
-    user_query = (state.get("user_query") or "").strip()
+    user_query = _retrieval_query(state).strip()
     context = (state.get("context") or "").strip()
     if not context:
         context = "\n".join(str(doc.get("snippet") or "") for doc in (state.get("docs") or [])[:4]).strip()
@@ -1566,6 +1886,16 @@ def build_prompt_node(state: StudyGraphState) -> StudyGraphState:
     extra = _answer_style_extra(state, route)
     if state.get("route") == "documents_plus_web" or (state.get("route") == "multi_task" and state.get("web_sources")):
         extra = f"{extra}\nUse both uploaded documents and web results. Separate file evidence from web evidence."
+    if state.get("retrieval_query") and state.get("retrieval_query") != state.get("user_query"):
+        extra = f"""
+{extra}
+
+Follow-up handling:
+- The current user message is a clarification/follow-up, not a standalone topic.
+- Use the recent conversation to understand what the user did not understand.
+- Use retrieved context for the previous request: {state.get("retrieval_query")}.
+- Explain the same topic again in a simpler way instead of saying there is no context for the short follow-up phrase.
+"""
     if route == "summary" and _is_document_summary_request(state.get("user_query", "")):
         if _has_brief_answer_request(state.get("user_query", "")):
             extra = """
@@ -1585,7 +1915,26 @@ say that the explanation is based on the indexed/extracted parts currently avail
 document outline, chapter sequence, design lifecycle, or table entries unless those details appear in the context.
 Prefer concise bullets over long speculative sections.
 """
-    state["prompt"] = agent.build_prompt(state.get("user_query", ""), context=state.get("context", ""), extra=extra)
+    system_prompt = f"""
+{agent.prompt}
+
+CONTEXT:
+{state.get("context", "") or 'No uploaded document context was retrieved. If you answer from model knowledge, label it clearly as من النموذج.'}
+
+{extra}
+"""
+    memory_messages = build_memory_augmented_messages(
+        session_id=state.get("chat_id", "default"),
+        current_user_prompt=state.get("user_query", ""),
+        system_prompt=system_prompt,
+        recent_messages_override=state.get("recent_chat_messages") if isinstance(state.get("recent_chat_messages"), list) else None,
+    )
+    state["prompt"] = render_messages_as_prompt(memory_messages)
+    state.setdefault("trace", {})["memory"] = {
+        "recent_limit": 8,
+        "relevant_top_k": 3,
+        "injected": True,
+    }
     _record(state, "Build Prompt", started, output=agent.name)
     return state
 

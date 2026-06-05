@@ -1,3 +1,10 @@
+"""LangGraph assembly and execution helpers.
+
+This module wires graph nodes and conditional edges into the application
+workflow. It should remain thin: node behavior belongs in ``src.graph.nodes``
+and route decisions belong in ``src.graph.edges``.
+"""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -49,6 +56,8 @@ from src.llm import resolve_model_profile
 
 
 def _initial_state(initial_state: StudyGraphState) -> StudyGraphState:
+    """Merge caller-provided state with graph defaults."""
+
     model_settings = resolve_model_profile(
         profile=initial_state.get("model_profile"),
         provider=initial_state.get("llm_provider"),
@@ -98,6 +107,21 @@ def _initial_state(initial_state: StudyGraphState) -> StudyGraphState:
 
 @lru_cache(maxsize=1)
 def build_graph():
+    """Build and cache the StudyWithMe LangGraph workflow.
+
+    Returns:
+        Compiled LangGraph application.
+
+    Raises:
+        RuntimeError:
+            If LangGraph is not installed.
+
+    Example:
+        >>> graph = build_graph()
+        >>> hasattr(graph, "invoke")
+        True
+    """
+
     if StateGraph is None or END is None:
         raise RuntimeError("LangGraph is not installed. Run: pip install langgraph")
 
@@ -271,11 +295,15 @@ def _after_guard(state: StudyGraphState) -> str:
 
 
 def run_study_graph(initial_state: StudyGraphState) -> StudyGraphState:
+    """Run the graph synchronously and return the completed state."""
+
     state = _initial_state(initial_state)
     return build_graph().invoke(state)
 
 
 def evaluate_completed_state(state: StudyGraphState, *, external_rag_eval_enabled: bool = False) -> StudyGraphState:
+    """Evaluate and trace a state that already contains an answer."""
+
     evaluation_state = dict(state)
     evaluation_state["external_rag_eval_enabled"] = external_rag_eval_enabled
     evaluated = evaluation_node(evaluation_state)
@@ -283,6 +311,8 @@ def evaluate_completed_state(state: StudyGraphState, *, external_rag_eval_enable
 
 
 def stream_study_graph(initial_state: StudyGraphState):
+    """Yield graph node updates while preserving the latest state."""
+
     state = _initial_state(initial_state)
     latest = state
     for update in build_graph().stream(state, stream_mode="updates"):

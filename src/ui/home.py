@@ -122,19 +122,19 @@ def render_home_page() -> None:
         """
         <div class="home-shell">
             <div class="summary-grid">
-                <div class="summary-card">
+                <div class="summary-card" data-tip="Upload course files, build an index, and answer from retrieved source chunks.">
                     <b>Document RAG</b>
                     <p>PDF, TXT, MD, CSV, and DOCX files are indexed per chat so answers stay grounded in the right material.</p>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card" data-tip="The assistant is optimized for clear educational Arabic answers while the app interface stays English.">
                     <b>Arabic tutoring</b>
                     <p>Responses keep the educational Arabic style with clear structure, technical terms, examples, and study summaries.</p>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card" data-tip="A LangGraph workflow chooses the right path for explanations, quizzes, feedback, study plans, tools, and web.">
                     <b>Agent workflow</b>
                     <p>LangGraph routes requests to tutor, quiz, feedback, study-plan, summary, calculator, or web-search paths.</p>
                 </div>
-                <div class="summary-card">
+                <div class="summary-card" data-tip="Every response can be inspected through traces, retrieved docs, tool calls, timings, and evaluation scores.">
                     <b>Trace and evaluation</b>
                     <p>Each answer stores route, retrieved documents, tools, timings, rubric scores, and optional judge feedback.</p>
                 </div>
@@ -158,7 +158,7 @@ def _workflow_visual_markup() -> str:
         <div class="workflow-canvas">
             <div class="flow-card flow-input">
                 <span>Input</span>
-                <b dir="rtl">اشرح المحاضرة ثم اختبرني</b>
+                <b>Explain the lecture, then quiz me</b>
                 <p class="home-caption">One prompt can become several study tasks.</p>
             </div>
             <div class="flow-engine">
@@ -175,7 +175,7 @@ def _workflow_visual_markup() -> str:
             </div>
             <div class="flow-card flow-output">
                 <span>Output</span>
-                <b dir="rtl">شرح عربي + مصادر + اختبار</b>
+                <b>Explanation + sources + quiz</b>
                 <div class="output-preview"><em></em><em></em><em></em></div>
                 <div class="quiz-preview"><i>A</i><i>B</i><i>C</i><i>D</i></div>
             </div>
@@ -392,7 +392,7 @@ html, body {
 <div class="visual-wrap" aria-label="StudyWithMe animated workflow">
     <section class="card input">
         <div class="label">Student prompt</div>
-        <div class="arabic">اشرح RAG من الملف واعمل اختبار من سؤالين</div>
+        <div class="arabic">Explain RAG from my file and create a two-question quiz</div>
         <div class="hint">One request can become explanation, retrieval, quiz, feedback, and evaluation.</div>
     </section>
     <section class="engine" aria-label="LangGraph route">
@@ -409,7 +409,7 @@ html, body {
     </section>
     <section class="card output">
         <div class="label">Study output</div>
-        <div class="arabic">تقرير مذاكرة منظم + اختبار تفاعلي</div>
+        <div class="arabic">Structured study report + interactive quiz</div>
         <div class="lines" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="choices" aria-hidden="true"><b>A</b><b>B</b><b>C</b><b>D</b></div>
     </section>
