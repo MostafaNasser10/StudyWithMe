@@ -70,7 +70,7 @@ def _render_long_term_memory_panel() -> None:
             with col_a:
                 st.caption(preference)
             with col_b:
-                if st.button("Delete", key=f"delete_long_term_preference_{idx}"):
+                if st.button("×", key=f"delete_long_term_preference_{idx}"):
                     delete_preference(idx)
                     st.rerun()
 
