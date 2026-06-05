@@ -497,7 +497,6 @@ For targeted workflow checks:
 - [x] Long-term user preferences
 - [x] Reflection and critic agents
 - [x] RAG evaluation panel
-- [ ] Add real screenshots to `assets/`
 - [ ] Add Docker setup
 - [ ] Add CI pipeline
 - [ ] Add deployment guide
