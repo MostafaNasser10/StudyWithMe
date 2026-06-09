@@ -1,5 +1,5 @@
-from src.document_loader import load_documents
-from src.text_splitter import split_documents
+from src.retrieval.document_loader import load_documents
+from src.retrieval.text_splitter import split_documents
 
 documents = load_documents()
 

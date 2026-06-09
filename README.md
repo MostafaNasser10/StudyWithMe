@@ -207,25 +207,20 @@ studywithme-arabic-ai/
 └── src/
     ├── agents/
     ├── chat/
+    ├── config/
     ├── document_processing/
     ├── evaluation/
     ├── files/
     ├── graph/
+    ├── guardrails/
+    ├── llm/
     ├── memory/
+    ├── prompts/
+    ├── rag/
+    ├── retrieval/
     ├── tools/
     ├── tracing/
-    ├── ui/
-    ├── arabic_guard.py
-    ├── config.py
-    ├── document_loader.py
-    ├── embeddings.py
-    ├── indexing_worker.py
-    ├── llm.py
-    ├── prompts.py
-    ├── rag.py
-    ├── retriever.py
-    ├── text_splitter.py
-    └── vector_store.py
+    └── ui/
 ```
 
 | Path | Purpose |
@@ -234,10 +229,16 @@ studywithme-arabic-ai/
 | `src/ui/` | Home page, chat view, sidebars, upload panel, styling |
 | `src/graph/` | LangGraph nodes, edges, schemas, orchestration |
 | `src/agents/` | Tutor, summary, quiz, feedback, study plan, web, reflection, critic agents |
+| `src/llm/` | LLM provider selection, model profiles, and streaming helpers |
+| `src/prompts/` | Central prompt templates used by agents and graph nodes |
+| `src/rag/` | RAG answer pipeline entrypoint |
+| `src/retrieval/` | Document loading, chunking, embeddings, vector store, and BM25/vector retrieval |
+| `src/guardrails/` | Arabic language guardrails and repair helpers |
+| `src/config/` | Environment-driven application settings |
 | `src/tools/` | Function tools for calculator, document search, web search, quiz grading, citations |
 | `src/memory/` | Recent chat memory, relevant chat search, long-term preferences |
 | `src/chat/` | Chat models, session state, persistent chat store |
-| `src/files/` | File management and indexing status |
+| `src/files/` | File management, indexing jobs, and indexing status |
 | `src/document_processing/` | OCR, table extraction, image extraction |
 | `src/evaluation/` | Rubrics, deterministic evaluation, RAG evaluation service |
 | `src/tracing/` | Trace models and trace persistence helpers |

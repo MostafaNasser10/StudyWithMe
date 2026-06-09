@@ -20,7 +20,7 @@ def run_indexing_job(chat_id: str) -> int:
             store.update_chat(chat_id, indexing_status=IndexingStatus.INDEXING, indexing_step=step)
 
         update_step("Checking index changes")
-        from src.vector_store import analyze_index_changes, rebuild_all
+        from src.retrieval.vector_store import analyze_index_changes, rebuild_all
 
         changes = analyze_index_changes(chat_id)
         if not changes.get("changed"):
@@ -66,7 +66,7 @@ def run_indexing_job(chat_id: str) -> int:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python -m src.indexing_worker <chat_id>")
+        print("Usage: python -m src.files.indexing_worker <chat_id>")
         return 2
     return run_indexing_job(sys.argv[1])
 

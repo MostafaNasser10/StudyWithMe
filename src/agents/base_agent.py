@@ -6,7 +6,7 @@ from typing import Any
 
 from src.config import TOP_K
 from src.llm import get_llm
-from src.retriever import retrieve_chunks_with_scores
+from src.retrieval.retriever import retrieve_chunks_with_scores
 
 
 @dataclass

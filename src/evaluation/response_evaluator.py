@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from statistics import mean
 
-from src.arabic_guard import contains_disallowed_language
+from src.guardrails.arabic import contains_disallowed_language
 from src.chat.chat_models import new_id, now_iso
 from src.evaluation.code_evaluators import deterministic_checks
 from src.evaluation.gold_standard import grade_against_gold

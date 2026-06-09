@@ -10,7 +10,7 @@ from threading import Thread
 from time import perf_counter
 from typing import Any, Callable
 
-from src.arabic_guard import contains_disallowed_language, enforce_arabic_answer
+from src.guardrails.arabic import contains_disallowed_language, enforce_arabic_answer
 from src.chat.chat_models import new_id, now_iso
 from src.config import (
     AUTOMATIC_EXTERNAL_RAG_EVAL,
@@ -1789,7 +1789,7 @@ def _sample_uploaded_documents(chat_id: str | None, max_docs: int = 4, max_chars
     try:
         from pathlib import Path
 
-        from src.document_loader import load_documents
+        from src.retrieval.document_loader import load_documents
     except Exception:
         return "", []
 

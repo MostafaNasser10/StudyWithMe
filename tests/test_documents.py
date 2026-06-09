@@ -1,4 +1,4 @@
-from src.document_loader import load_documents
+from src.retrieval.document_loader import load_documents
 
 documents = load_documents()
 

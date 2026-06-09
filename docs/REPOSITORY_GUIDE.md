@@ -10,6 +10,13 @@ source modules and tests.
   state, renders the home screen, and composes the chat workspace.
 - `src/agents`: Agent classes and factory helpers for tutor answers, summaries,
   quizzes, study plans, feedback, web search, reflection, and critic review.
+- `src/llm`: Model profile resolution, provider-specific LLM construction, and
+  streaming helpers.
+- `src/prompts`: Shared prompt templates used by agents and graph nodes.
+- `src/rag`: RAG answer pipeline entrypoint for simple non-graph usage.
+- `src/retrieval`: Document loading, chunking, embeddings, FAISS persistence,
+  vector retrieval, and BM25 lexical retrieval.
+- `src/guardrails`: Arabic output checks and LLM-based answer repair.
 - `src/graph`: LangGraph state, routing schemas, node implementations, edge
   decisions, and graph runners.
 - `src/tools`: Application tools that can be selected by the graph, including
@@ -19,8 +26,8 @@ source modules and tests.
   relevant chat memory, and manually managed long-term preferences.
 - `src/chat`: Persistent chat models, JSON chat store, and Streamlit session
   defaults.
-- `src/files`: Upload persistence, per-chat asset paths, and background indexing
-  job launcher.
+- `src/files`: Upload persistence, per-chat asset paths, indexing status, and
+  background indexing job launcher.
 - `src/document_processing`: OCR, image extraction, and table extraction hooks
   used during document loading.
 - `src/evaluation`: Deterministic checks, rubric scoring, gold-standard checks,

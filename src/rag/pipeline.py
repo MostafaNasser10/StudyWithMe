@@ -1,6 +1,6 @@
 from src.agents.base_agent import append_sources_section
 from src.agents.tutor_agent import TutorAgent
-from src.arabic_guard import enforce_arabic_answer
+from src.guardrails.arabic import enforce_arabic_answer
 from src.llm import get_llm
 
 

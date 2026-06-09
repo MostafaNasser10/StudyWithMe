@@ -16,7 +16,7 @@ from uuid import uuid4
 from typing import Any
 
 from src.config import DATA_DIR
-from src.embeddings import get_embedding_model
+from src.retrieval.embeddings import get_embedding_model
 
 
 MEMORY_CHAT_DIR = DATA_DIR / "memory" / "chats"

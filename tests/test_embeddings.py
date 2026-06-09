@@ -1,4 +1,4 @@
-from src.embeddings import get_embedding_model
+from src.retrieval.embeddings import get_embedding_model
 
 embedding_model = get_embedding_model()
 

@@ -24,7 +24,7 @@ def start_indexing_worker(chat_id: str) -> None:
 
         def run_in_thread() -> None:
             try:
-                from src.indexing_worker import run_indexing_job
+                from src.files.indexing_worker import run_indexing_job
 
                 run_indexing_job(chat_id)
             finally:
@@ -38,7 +38,7 @@ def start_indexing_worker(chat_id: str) -> None:
     if sys.platform.startswith("win"):
         kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
     subprocess.Popen(
-        [sys.executable, "-m", "src.indexing_worker", chat_id],
+        [sys.executable, "-m", "src.files.indexing_worker", chat_id],
         cwd=str(Path(__file__).resolve().parents[2]),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

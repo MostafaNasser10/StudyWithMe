@@ -18,11 +18,11 @@ from src.config import (
     RAW_DOCS_DIR,
     TOP_K,
 )
-from src.document_loader import load_documents
-from src.embeddings import get_embedding_model
+from src.retrieval.document_loader import load_documents
+from src.retrieval.embeddings import get_embedding_model
 from src.files.file_manager import chat_faiss_index_dir, chat_manifest_path, chat_raw_docs_dir
 from src.files.indexing_status import IndexingResult, IndexingStatus
-from src.text_splitter import split_documents
+from src.retrieval.text_splitter import split_documents
 
 
 _VECTOR_STORES: dict[str, FAISS] = {}

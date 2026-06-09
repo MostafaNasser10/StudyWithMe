@@ -6,7 +6,7 @@ from collections import Counter
 from typing import Any
 
 from src.config import TOP_K
-from src.vector_store import get_vector_store
+from src.retrieval.vector_store import get_vector_store
 
 
 def retrieve_chunks(query: str, k: int = TOP_K, chat_id: str | None = None):

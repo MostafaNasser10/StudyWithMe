@@ -7,8 +7,8 @@ from typing import Any
 
 from src.agents.base_agent import context_from_results, docs_from_results
 from src.config import TOP_K
-from src.retriever import retrieve_chunks_bm25_from_store, retrieve_chunks_with_scores_from_store
-from src.vector_store import get_vector_store
+from src.retrieval.retriever import retrieve_chunks_bm25_from_store, retrieve_chunks_with_scores_from_store
+from src.retrieval.vector_store import get_vector_store
 
 
 @dataclass

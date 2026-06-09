@@ -1,4 +1,4 @@
-from src.retriever import retrieve_chunks
+from src.retrieval.retriever import retrieve_chunks
 
 query = "What is GlobalQA?"
 

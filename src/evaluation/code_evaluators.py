@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from src.arabic_guard import contains_disallowed_language, disallowed_language_details
+from src.guardrails.arabic import contains_disallowed_language, disallowed_language_details
 
 
 ARABIC_RE = re.compile(r"[\u0600-\u06FF]")
